@@ -1,0 +1,107 @@
+<?php //$this->showTemplateVars(); ?>
+
+<?php
+	$GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/adressen/assets/js/adressen.js';
+?>
+
+<div class="<?php echo $this->class; ?> block"<?php echo $this->cssID; ?><?php if ($this->style): ?> style="<?php echo $this->style; ?>"<?php endif; ?>>
+	
+	<div class="suchformular">
+		<form action="" method="get">
+			<label>Suchbegriff:</label> <input type="text" name="s" class="text" value="<?= $this->Suchbegriff ?>">
+			<fieldset>
+				<legend>Mitglied in</legend> 
+				<ul> 
+				<?php foreach($this->Funktionen as $key => $value): ?>
+					<li><label><input type="checkbox" name="funktion[]" value="<?= $key ?>"<?php if(in_array($key, $this->Funktionsauswahl)): ?> checked<?php endif; ?>> <?= $value ?></label></li>
+				<?php endforeach; ?>
+				</ul>
+				<div style="clear:both; padding-top:5px;">Verknüpfung: <input type="radio" name="join" value="and"<?php if($this->Verknuepfung == 'AND'): ?> checked<?php endif; ?>> <label> UND</label> <input type="radio" name="join" value="or"<?php if($this->Verknuepfung == 'OR'): ?> checked<?php endif; ?>> <label> ODER</label></div>
+			</fieldset> 
+			<fieldset>
+				<legend>Nur E-Mails anzeigen</legend> 
+				<ul> 
+					<li><label><input type="checkbox" name="email" value="1"<?php if($this->Liteversion): ?> checked<?php endif; ?>> Eingeschaltet</label></li>
+				</ul>
+			</fieldset> 
+			<input type="submit" class="submit" value="Suchen">
+		</form>
+	</div>
+	<div style="clear:both"></div>
+	
+	<?php if ($this->Gesucht): ?>
+		<?php if ($this->Ergebnisliste): ?>
+			<div class="trefferliste">
+				<p>Du suchtest nach "<i><?= $this->Suchbegriff ?></i>". Wir haben <?= count($this->Ergebnisliste) ?> Datensätze in unserer Datenbank.</p>
+				<?php if($this->Liteversion): ?>
+					<?php foreach($this->Ergebnisliste as $item): ?>
+						<?php $checked = false; ?>
+						<?php if($ja == false): ?>
+							<?php if($item['email1']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email1'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email1'] ?>&gt;<br><?php endif; ?>
+							<?php if($item['email2']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email2'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email2'] ?>&gt;<br><?php endif; ?>
+							<?php if($item['email3']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email3'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email3'] ?>&gt;<br><?php endif; ?>
+							<?php if($item['email4']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email4'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email4'] ?>&gt;<br><?php endif; ?>
+							<?php if($item['email5']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email5'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email5'] ?>&gt;<br><?php endif; ?>
+							<?php if($item['email6']): ?><input type="checkbox" class="email-auswahl" name="email_aktiv[]" value="<?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email6'] ?>&gt;"<?php if(!$checked): ?> checked<?php $checked = true; ?><?php endif; ?>> <?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email6'] ?>&gt;<br><?php endif; ?>
+						<?php else: ?>
+							<?php if($item['email1']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email1'] ?>&gt;<br> <?php endif; ?>
+							<?php if($item['email2']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email2'] ?>&gt;<br> <?php endif; ?>
+							<?php if($item['email3']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email3'] ?>&gt;<br> <?php endif; ?>
+							<?php if($item['email4']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email4'] ?>&gt;<br> <?php endif; ?>
+							<?php if($item['email5']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email5'] ?>&gt;<br> <?php endif; ?>
+							<?php if($item['email6']): ?><?= $item['vorname'] ?> <?= $item['nachname'] ?> &lt;<?= $item['email6'] ?>&gt;<br> <?php endif; ?>
+						<?php endif; ?>
+					<?php endforeach; ?>
+					<textarea id="kopiertext" style="display:none;"></textarea>
+					<button id="kopieren">Ausgewählte Adressen kopieren</button>
+				<?php else: ?>
+					<ul>
+					<?php foreach($this->Ergebnisliste as $item): ?>
+						<li class="<?= $item['deaktiviert'] ?><?= $item['unverlinkt'] ?>">
+						<?php if($item['firma']): ?>
+							<div class="firma"><?= $item['firma'] ?></div>
+						<?php endif; ?>
+						<?php if($item['vorname'] || $item['nachname']): ?>
+							<div class="name"><?= $item['vorname'] ?> <?= $item['nachname'] ?></div>
+						<?php endif; ?>
+						<?php if($item['plz'] || $item['ort'] || $item['strasse']): ?>
+							<div class="adresse"><?= $item['plz'] ?> <?= $item['ort'] ?>, <?= $item['strasse'] ?></div>
+						<?php endif; ?>
+						<?php if($item['homepage']): ?>
+							<div class="homepage"><a href="<?= $item['homepage'] ?>" target="_blank" class="homepage"><?= $item['homepage'] ?></a></div>
+						<?php endif; ?>
+						<?php if($item['telefon']): ?>
+							<div class="telefon">
+								<?php if($item['telefon1']): ?>&nbsp;<a href="tel:<?= $item['telefon1sel'] ?>"><?= $item['telefon1'] ?></a><?php endif; ?>
+								<?php if($item['telefon2']): ?>&nbsp;<a href="tel:<?= $item['telefon2sel'] ?>"><?= $item['telefon2'] ?></a><?php endif; ?>
+								<?php if($item['telefon3']): ?>&nbsp;<a href="tel:<?= $item['telefon3sel'] ?>"><?= $item['telefon3'] ?></a><?php endif; ?>
+								<?php if($item['telefon4']): ?>&nbsp;<a href="tel:<?= $item['telefon4sel'] ?>"><?= $item['telefon4'] ?></a><?php endif; ?>
+							</div>
+						<?php endif; ?>
+						<?php if($item['email']): ?>
+							<div class="email">
+								<?php if($item['email1']): ?>&nbsp;<a href="mailto:<?= $item['email1'] ?>"><?= $item['email1'] ?></a><?php endif; ?>
+								<?php if($item['email2']): ?>&nbsp;<a href="mailto:<?= $item['email2'] ?>"><?= $item['email2'] ?></a><?php endif; ?>
+								<?php if($item['email3']): ?>&nbsp;<a href="mailto:<?= $item['email3'] ?>"><?= $item['email3'] ?></a><?php endif; ?>
+								<?php if($item['email4']): ?>&nbsp;<a href="mailto:<?= $item['email4'] ?>"><?= $item['email4'] ?></a><?php endif; ?>
+								<?php if($item['email5']): ?>&nbsp;<a href="mailto:<?= $item['email5'] ?>"><?= $item['email5'] ?></a><?php endif; ?>
+								<?php if($item['email6']): ?>&nbsp;<a href="mailto:<?= $item['email6'] ?>"><?= $item['email6'] ?></a><?php endif; ?>
+							</div>
+						<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+			</div>
+		<?php else: ?>
+			<div class="trefferliste">
+				<p>Du suchtest nach "<i><?= $this->Suchbegriff ?></i>". Wir haben leider keine Adresse gefunden.</p>
+			</div>
+		<?php endif; ?>
+	<?php endif; ?>
+
+	<div class="hinweis">
+		Die Suche erfolgt in den Feldern Firma, Vorname, Nachname, PLZ, Ort, Straße, allen Telefon- und faxnummern, allen E-Mail-Adressen, dem öffentlichen Profil und den internen Bemerkungen. Groß- und Kleinschreibung ist egal, ebenso Umlaute und Sonderzeichen.
+	</div>
+
+</div>

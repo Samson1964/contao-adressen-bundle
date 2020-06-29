@@ -1,0 +1,180 @@
+<?php $this->showTemplateVars(); ?>
+
+<div class="adresse_default <?php echo $this->class; ?> block"<?php echo $this->cssID; ?><?php if ($this->style): ?> style="<?php echo $this->style; ?>"<?php endif; ?>>
+
+<?php if($this->id && $this->aktiv): ?>
+
+	<?php if ($this->headline): ?>
+		<<?php echo $this->hl; ?>><?php echo $this->headline; ?></<?php echo $this->hl; ?>>
+	<?php endif; ?>
+
+	<?php if ($this->viewfoto && ($this->floatClass == ' float_above' || $this->floatClass == ' float_left' || $this->floatClass == ' float_right')): ?>
+	<?php //if ($this->viewfoto): ?>
+
+		<figure class="image_container<?php echo $this->floatClass; ?>"<?php if ($this->margin || $this->float): ?> style="<?php echo trim($this->margin . $this->float); ?>"<?php endif; ?>> 
+
+			<?php if ($this->href): ?>
+				<a href="<?php echo $this->href; ?>"<?php if ($this->linkTitle): ?> title="<?php echo $this->linkTitle; ?>"<?php endif; ?><?php echo $this->attributes; ?>>
+			<?php endif; ?>
+			
+ 		<img src="<?php echo $this->src; ?>"<?php echo $this->imgSize; ?> alt="<?php echo $this->alt; ?>"<?php if ($this->title): ?> title="<?php echo $this->title; ?>"<?php endif; ?>>
+			
+			<?php if ($this->href): ?>
+				</a>
+			<?php endif; ?>
+			
+			<?php if ($this->caption): ?>
+				<?php
+					// Nach Copyright per Regex suchen
+					$found = preg_match("/(\[.+\])/",$this->caption,$treffer,PREG_OFFSET_CAPTURE);
+					if($found)
+					{
+						// Copyright gefunden, Länge und Position speichern
+						$cplen = strlen($treffer[0][0]);
+						$cppos = $treffer[0][1];
+						// Copyright ersetzen
+						$cpstr = str_replace("[","<div class=\"rechte\">",$treffer[0][0]);
+						$cpstr = str_replace("]","</div>",$cpstr);
+						// Restliche Bildunterschrift extrahieren
+						$this->caption = substr($this->caption,0,$cppos).substr($this->caption,$cppos+$cplen);
+						// Copyright hinzufügen
+						$this->caption = $cpstr.$this->caption;
+					}
+				?>
+				<figcaption class="caption" style="width:<?php echo $this->arrSize[0]; ?>px"><?php echo $this->caption; ?></figcaption>
+			<?php endif; ?>
+		
+		</figure> 
+
+	<?php endif; ?> 
+
+	<?php if($this->funktion): ?>
+		<span class="adr_funktion"><?php echo $this->funktion ?>:</span>
+	<?php endif; ?>
+
+	<?php if($this->zusatz): ?>
+		<span class="adr_zusatz"><?php echo $this->zusatz ?></span>
+	<?php endif; ?>
+
+	<?php if($this->name): ?>
+		<?php if($this->visitenkarte): ?>
+			<span class="adr_name adr_info" onmouseover="return overlib('<?php echo $this->visitenkarte ?>',CAPTION,'Informationen zu <?php echo $this->name ?>',BGCOLOR,'#00006C',FGCLASS,'funktionsbox',WIDTH,'450');" onmouseout="return nd();">
+		<?php else: ?>
+			<span class="adr_name">
+		<?php endif; ?>
+		<?php echo $this->name ?></span><br />
+	<?php endif; ?>
+
+	<?php if($this->adresse): ?>
+		<span class="adr_adresse"><a class="google" target="_blank" href="http://maps.google.de/maps?hl=de&t=h&iwloc=addr&q=<?php echo $this->adresse ?>" title="Adresse in Googlemap suchen"><?php echo $this->adresse ?></a></span><br />
+	<?php endif; ?>
+
+	<?php if($this->telefon_fest): ?>
+		<?php $i = 0; ?>
+		<?php foreach($this->telefon_fest as $item): ?>
+			<?php $i++; ?>
+			<?php if($i == 1 && count($this->telefon_fest) == 1): ?>
+				<span class="adr_telefon"><?php echo $item ?></span><br />
+			<?php elseif($i == 1 && count($this->telefon_fest) > 1): ?>
+				<span class="adr_telefon"><?php echo $item ?></span>,
+			<?php elseif($i == count($this->telefon_fest)): ?>
+				<span><?php echo $item ?></span><br />
+			<?php else: ?>
+				<span><?php echo $item ?></span>,
+			<?php endif; ?>
+		<?php endforeach; ?>
+	<?php endif; ?>
+
+	<?php if($this->telefon_mobil): ?>
+		<?php $i = 0; ?>
+		<?php foreach($this->telefon_mobil as $item): ?>
+			<?php $i++; ?>
+			<?php if($i == 1 && count($this->telefon_mobil) == 1): ?>
+				<span class="adr_mobil"><?php echo $item ?></span><br />
+			<?php elseif($i == 1 && count($this->telefon_mobil) > 1): ?>
+				<span class="adr_mobil"><?php echo $item ?></span>,
+			<?php elseif($i == count($this->telefon_mobil)): ?>
+				<span><?php echo $item ?></span><br />
+			<?php else: ?>
+				<span><?php echo $item ?></span>,
+			<?php endif; ?>
+		<?php endforeach; ?>
+	<?php endif; ?>
+
+	<?php if($this->telefax): ?>
+		<?php $i = 0; ?>
+		<?php foreach($this->telefax as $item): ?>
+			<?php $i++; ?>
+			<?php if($i == 1 && count($this->telefax) == 1): ?>
+				<span class="adr_telefax"><?php echo $item ?></span><br />
+			<?php elseif($i == 1 && count($this->telefax) > 1): ?>
+				<span class="adr_telefax"><?php echo $item ?></span>,
+			<?php elseif($i == count($this->telefax)): ?>
+				<span><?php echo $item ?></span><br />
+			<?php else: ?>
+				<span><?php echo $item ?></span>,
+			<?php endif; ?>
+		<?php endforeach; ?>
+	<?php endif; ?>
+
+	<?php if($this->email): ?>
+		<?php $i = 0; ?>
+		<?php foreach($this->email as $item): ?>
+			<?php $i++; ?>
+			<?php if($i == count($this->email)): ?>
+				<span class="adr_email">{{email::<?php echo $item ?>}}</span><br />
+			<?php else: ?>
+				<span class="adr_email">{{email::<?php echo $item ?>}}</span>,
+			<?php endif; ?>
+		<?php endforeach; ?>
+	<?php endif; ?>
+
+	<?php if($this->icq): ?>
+		<a class="icq" title="ICQ" href="http://www.icq.com/people/<?php echo $this->icq ?>/" target="_blank"><?php echo $this->icq ?></a>
+	<?php endif; ?>
+
+	<?php if($this->homepage): ?>
+		<a class="homepage" title="Homepage" href="<?php echo $this->homepage ?>" target="_blank"><?php echo $this->homepage ?></a>
+	<?php endif; ?>
+
+	<?php if($this->facebook): ?>
+		<a class="facebook" title="Facebook" href="https://www.facebook.com/<?php echo $this->facebook ?>" target="_blank"><?php echo $this->facebook ?></a>
+	<?php endif; ?>
+
+	<?php if ($this->viewfoto && $this->floatClass == ' float_below'): ?>
+
+		<figure class="image_container<?php echo $this->floatClass; ?>"<?php if ($this->margin || $this->float): ?> style="<?php echo trim($this->margin . $this->float); ?>"<?php endif; ?>> 
+
+			<?php if ($this->href): ?>
+				<a href="<?php echo $this->href; ?>"<?php if ($this->linkTitle): ?> title="<?php echo $this->linkTitle; ?>"<?php endif; ?><?php echo $this->attributes; ?>>
+			<?php endif; ?>
+			
+			<img src="<?php echo $this->src; ?>"<?php echo $this->imgSize; ?> alt="<?php echo $this->alt; ?>"<?php if ($this->title): ?> title="<?php echo $this->title; ?>"<?php endif; ?>>
+			
+			<?php if ($this->href): ?>
+				</a>
+			<?php endif; ?>
+			
+			<?php if ($this->caption): ?>
+				<figcaption class="caption" style="width:<?php echo $this->arrSize[0]; ?>px"><?php echo $this->caption; ?></figcaption>
+			<?php endif; ?>
+		
+		</figure> 
+
+	<?php endif; ?> 
+
+<?php else: ?>
+
+	<?php if ($this->headline): ?>
+		<<?php echo $this->hl; ?>><?php echo $this->headline; ?></<?php echo $this->hl; ?>>
+	<?php endif; ?>
+
+	<?php if($this->funktion): ?>
+		<span class="adr_funktion"><?php echo $this->funktion ?>:</span>
+	<?php endif; ?>
+
+	<span class="adr_inaktiv">z.Z. unbesetzt</span>
+
+<?php endif; ?>
+
+</div>
