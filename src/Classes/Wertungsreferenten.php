@@ -120,22 +120,22 @@ class Wertungsreferenten extends \Module
 			if($data->telefon1) 
 			{
 				$telefon[] = $data->telefon1;
-				(adresseClass::Mobilfunk($data->telefon1)) ? $telefon_mobil[] = $data->telefon1 : $telefon_fest[] = $data->telefon1;
+				(\Schachbulle\ContaoAdressenBundle\ContentElements\Adresse::Mobilfunk($data->telefon1)) ? $telefon_mobil[] = $data->telefon1 : $telefon_fest[] = $data->telefon1;
 			}
 			if($data->telefon2) 
 			{
 				$telefon[] = $data->telefon2;
-				(adresseClass::Mobilfunk($data->telefon2)) ? $telefon_mobil[] = $data->telefon2 : $telefon_fest[] = $data->telefon2;
+				(\Schachbulle\ContaoAdressenBundle\ContentElements\Adresse::Mobilfunk($data->telefon2)) ? $telefon_mobil[] = $data->telefon2 : $telefon_fest[] = $data->telefon2;
 			}
 			if($data->telefon3) 
 			{
 				$telefon[] = $data->telefon3;
-				(adresseClass::Mobilfunk($data->telefon3)) ? $telefon_mobil[] = $data->telefon3 : $telefon_fest[] = $data->telefon3;
+				(\Schachbulle\ContaoAdressenBundle\ContentElements\Adresse::Mobilfunk($data->telefon3)) ? $telefon_mobil[] = $data->telefon3 : $telefon_fest[] = $data->telefon3;
 			}
 			if($data->telefon4) 
 			{
 				$telefon[] = $data->telefon4;
-				(adresseClass::Mobilfunk($data->telefon4)) ? $telefon_mobil[] = $data->telefon4 : $telefon_fest[] = $data->telefon4;
+				(\Schachbulle\ContaoAdressenBundle\ContentElements\Adresse::Mobilfunk($data->telefon4)) ? $telefon_mobil[] = $data->telefon4 : $telefon_fest[] = $data->telefon4;
 			}
 		}
 
