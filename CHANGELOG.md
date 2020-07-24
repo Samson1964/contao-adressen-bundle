@@ -1,9 +1,12 @@
 # Adressen Changelog
 
+## Version 1.0.2 (2020-07-24)
+
+* Fix adresseClass -> \Schachbulle\ContaoAdressenBundle\ContentElements\Adresse in Wertungsreferenten.php
+
 ## Version 1.0.1 (2020-07-03)
 
-* "Too few arguments to build the query string" beim Speichern einer neuen Adresse
-* Fix: adresseClass in Wertungsreferenten.php ersetzt durch Schachbulle\ContaoAdressenBundle\ContentElements\Adresse
+* Fix: "Too few arguments to build the query string" beim Speichern einer neuen Adresse. Aufgerufen wurde getFunktionen statt generateAlias
 
 ## Version 1.0.0 (2020-06-29)
 

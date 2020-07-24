@@ -1048,7 +1048,7 @@ class tl_adressen extends Backend
 		$temp .= '-'.$dc->activeRecord->text;
 		$temp .= '-'.$dc->activeRecord->info;
 
-		$temp = \Schachbulle\ContaoAdressenBundle\Classes\Funktionen::getFunktionen($temp);
+		$temp = \Schachbulle\ContaoAdressenBundle\Classes\Funktionen::generateAlias($temp);
 		\Database::getInstance()->prepare("UPDATE tl_adressen SET searchstring = ? WHERE id = ?")
 		                        ->execute($temp, $dc->id);
 	}
