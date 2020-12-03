@@ -1,5 +1,19 @@
 # Adressen Changelog
 
+## Version 2.0.0 (2020-11-03)
+
+* Add: In den Einstellungen kann ein Standardbild und die allgemeine Bildgröße gesetzt werden
+* Change: Bild-Einstellungen komplett reduziert auf das einzubindende Bild (Abstände, Großansicht, Ausrichtung, Metaangaben, Bild ja/nein entfernt)
+* Delete: tl_adressen.alias (wird nicht benötigt)
+* Change: Template ce_adressen_default statt adressen_default als Standard für das Inhaltselement gesetzt
+* Add: Template ce_adressen_default mit Aufbau von Contao 4
+* Change: Alternatives Template in tl_content per Checkbox einschaltbar gemacht
+* Change: Templatefilter tl_content ce_adressen_ statt adressen_
+* Delete: Messenger ICQ, MSN, AIM, Yahoo, Google+
+* Add: Messenger Instagram, Skype, Telegram, WhatsApp, Threema
+* Add: tl_adressen.homepage mit http:// vorbelegt
+* Fix: Adressenauswahl im Inhaltselement bei Firmen (ohne Vor- und Nachname) war unmöglich
+
 ## Version 1.0.2 (2020-07-24)
 
 * Fix adresseClass -> \Schachbulle\ContaoAdressenBundle\ContentElements\Adresse in Wertungsreferenten.php

@@ -1,0 +1,99 @@
+<?php $this->extend('block_searchable'); ?>
+
+<?php $this->block('content'); ?>
+
+	<div class="adresse">
+	
+		<?php if($this->id && $this->aktiv): ?>
+
+			<?php if($this->viewFoto): ?>
+				<figure class="image_container float_left">
+					<a href="<?= $this->singleSRC ?>" data-lightbox="adresse<?= $this->id ?>"><img src="<?= $this->thumbnail ?>" alt="<?= $this->imageAlt ?>" title="<?= $this->imageTitle ?>"></a>
+					<?php if ($this->imageCaption): ?>
+						<figcaption class="caption"><?= $this->imageCaption ?></figcaption>
+					<?php endif; ?>
+				</figure>
+			<?php endif; ?>
+	
+			<?php if($this->funktion): ?>
+				<span class="adr_funktion"><?= $this->funktion ?>:</span>
+			<?php endif; ?>
+	
+			<?php if($this->funktioninfo): ?>
+				<span class="adr_funktioninfo"><?= $this->funktioninfo ?></span>
+			<?php endif; ?>
+	
+			<?php if($this->name): ?>
+				<?php if($this->visitenkarte): ?>
+					<span class="adr_name adr_info" onmouseover="return overlib('<?= $this->visitenkarte ?>',CAPTION,'Informationen zu <?= $this->name ?>',BGCOLOR,'#00006C',FGCLASS,'funktionsbox',WIDTH,'450');" onmouseout="return nd();">
+				<?php else: ?>
+					<span class="adr_name">
+				<?php endif; ?>
+				<?= $this->name ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->adresse): ?>
+				<span class="adr_adresse"><?= $this->adresse ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->telefon): ?>
+				<span class="telefon"><?= $this->telefon ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->handy): ?>
+				<span class="handy"><?= $this->handy ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->telefax): ?>
+				<span class="fax"><?= $this->telefax ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->email): ?>
+				<span><?= $this->email ?></span><br />
+			<?php endif; ?>
+	
+			<?php if($this->homepage): ?>
+				<a class="homepage" title="Homepage" href="<?= $this->homepage ?>" target="_blank"><?= $this->homepage ?></a>
+			<?php endif; ?>
+	
+			<?php if($this->facebook): ?>
+				<a class="facebook" title="Facebook" href="https://www.facebook.com/<?= $this->facebook ?>" target="_blank"><?= $this->facebook ?></a>
+			<?php endif; ?>
+	
+			<?php if($this->twitter): ?>
+				<a class="twitter" title="Twitter" href="https://twitter.com/<?= $this->twitter ?>" target="_blank"><?= $this->twitter ?></a>
+			<?php endif; ?>
+
+			<?php if($this->instagram): ?>
+				<a class="instagram" title="Instagram" href="https://www.instagram.com/<?= $this->instagram ?>/" target="_blank"><?= $this->instagram ?></a>
+			<?php endif; ?>
+
+			<?php if($this->skype): ?>
+				<a class="messenger skype" title="Skype" href="Skype:<?= $this->skype ?>" target="_blank"><?= $this->skype ?></a>
+			<?php endif; ?>
+
+			<?php if($this->whatsapp): ?>
+				<a class="messenger whatsapp" title="WhatsApp" href="https://wa.me/<?= $this->whatsapp ?>" target="_blank"><?= $this->whatsapp ?></a>
+			<?php endif; ?>
+
+			<?php if($this->threema): ?>
+				<a class="messenger threema" title="Threema" href="https://threema.id/<?= $this->threema ?>" target="_blank"><?= $this->threema ?></a>
+			<?php endif; ?>
+
+			<?php if($this->telegram): ?>
+				<a class="messenger telegram" title="Telegram" href="https://t.me/<?= $this->telegram ?>" target="_blank"><?= $this->telegram ?></a>
+			<?php endif; ?>
+
+		<?php else: ?>
+	
+			<?php if($this->funktion): ?>
+				<span class="adr_funktion"><?= $this->funktion ?>:</span>
+			<?php endif; ?>
+	
+			<span class="adr_inaktiv">z.Z. unbesetzt</span>
+	
+		<?php endif; ?>
+	
+	</div>
+
+<?php $this->endblock(); ?>

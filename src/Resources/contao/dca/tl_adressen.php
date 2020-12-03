@@ -15,8 +15,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 		(
 			'keys' => array
 			(
-				'id' => 'primary',
-				'alias' => 'index'
+				'id' => 'primary'
 			)
 		),
 		'onsubmit_callback' => array
@@ -110,14 +109,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	// Paletten
 	'palettes' => array
 	(
-		'__selector__'                => array('addImage'),
-		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{adressen_legend:hide},adressen;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefone_legend:hide},telefone;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{emails_legend:hide},emails;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,google,icq,yahoo,aim,msn,irc;{image_legend:hide},addImage;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv;{alias_legende},alias'
-	),
-
-	// Unterpaletten
-	'subpalettes' => array
-	(
-		'addImage'                    => 'singleSRC,alt,size,imagemargin,imageUrl,fullsize,caption,floating'
+		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{adressen_legend:hide},adressen;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefone_legend:hide},telefone;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{emails_legend:hide},emails;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,instagram,skype,whatsapp,threema,telegram,irc;{image_legend:hide},singleSRC;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv'
 	),
 
 	// Felder
@@ -626,6 +618,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'sorting'                 => true,
 			'flag'                    => 1,
+			'default'                 => 'http://',
 			'search'                  => false,
 			'eval'                    => array('mandatory'=>false, 'tl_class'=>'long clr'),
 			'sql'                     => "text NULL"
@@ -652,9 +645,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'google' => array
+		'instagram' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['google'],
+			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['instagram'],
 			'inputType'               => 'text',
 			'exclude'                 => true,
 			'sorting'                 => true,
@@ -663,9 +656,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'icq' => array
+		'skype' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['icq'],
+			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['skype'],
 			'inputType'               => 'text',
 			'exclude'                 => true,
 			'sorting'                 => true,
@@ -674,9 +667,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'yahoo' => array
+		'whatsapp' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['yahoo'],
+			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['whatsapp'],
 			'inputType'               => 'text',
 			'exclude'                 => true,
 			'sorting'                 => true,
@@ -685,9 +678,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'aim' => array
+		'threema' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['aim'],
+			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['threema'],
 			'inputType'               => 'text',
 			'exclude'                 => true,
 			'sorting'                 => true,
@@ -696,9 +689,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'msn' => array
+		'telegram' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['msn'],
+			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['telegram'],
 			'inputType'               => 'text',
 			'exclude'                 => true,
 			'sorting'                 => true,
@@ -735,80 +728,14 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['singleSRC'],
 			'exclude'                 => true,
 			'inputType'               => 'fileTree',
-			'eval'                    => array('filesOnly'=>true, 'extensions'=>Config::get('validImageTypes'), 'fieldType'=>'radio', 'mandatory'=>true),
-			'save_callback'           => array
+			'eval'                    => array
 			(
-				array('tl_adressen', 'storeFileMetaInformation')
-			), 
-			'sql'                     => "binary(16) NULL"
-		), 
-		'alt' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['alt'],
-			'exclude'                 => true,
-			'search'                  => true,
-			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'tl_class'=>'long'),
-			'sql'                     => "varchar(255) NOT NULL default ''"
-		),
-		'size' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['size'],
-			'exclude'                 => true,
-			'inputType'               => 'imageSize',
-			'options'                 => System::getImageSizes(), 
-			'reference'               => &$GLOBALS['TL_LANG']['MSC'],
-			'eval'                    => array('rgxp'=>'digit', 'nospace'=>true, 'helpwizard'=>true, 'tl_class'=>'w50'),
-			'sql'                     => "varchar(64) NOT NULL default ''"
-		),
-		'imagemargin' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['imagemargin'],
-			'exclude'                 => true,
-			'inputType'               => 'trbl',
-			'options'                 => array('px', '%', 'em', 'ex', 'pt', 'pc', 'in', 'cm', 'mm'),
-			'eval'                    => array('includeBlankOption'=>true, 'tl_class'=>'w50'),
-			'sql'                     => "varchar(128) NOT NULL default ''"
-		),
-		'imageUrl' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['imageUrl'],
-			'exclude'                 => true,
-			'search'                  => true,
-			'inputType'               => 'text',
-			'eval'                    => array('rgxp'=>'url', 'decodeEntities'=>true, 'maxlength'=>255, 'tl_class'=>'w50 wizard'),
-			'wizard' => array
-			(
-				array('tl_adressen', 'pagePicker')
+				'filesOnly'           => true,
+				'extensions'          => Config::get('validImageTypes'),
+				'fieldType'           => 'radio',
+				'mandatory'           => false
 			),
-			'sql'                     => "varchar(255) NOT NULL default ''"
-		),
-		'fullsize' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['fullsize'],
-			'exclude'                 => true,
-			'inputType'               => 'checkbox',
-			'eval'                    => array('tl_class'=>'w50 m12'),
-			'sql'                     => "char(1) NOT NULL default ''"
-		),
-		'caption' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['caption'],
-			'exclude'                 => true,
-			'search'                  => true,
-			'inputType'               => 'text',
-			'eval'                    => array('maxlength'=>255, 'allowHtml'=>true, 'tl_class'=>'w50'),
-			'sql'                     => "varchar(255) NOT NULL default ''"
-		),
-		'floating' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['floating'],
-			'exclude'                 => true,
-			'inputType'               => 'radioTable',
-			'options'                 => array('above', 'left', 'right', 'below'),
-			'eval'                    => array('cols'=>4, 'tl_class'=>'w50'),
-			'reference'               => &$GLOBALS['TL_LANG']['MSC'],
-			'sql'                     => "varchar(12) NOT NULL default ''"
+			'sql'                     => "binary(16) NULL"
 		), 
 		'text' => array
 		(
@@ -851,19 +778,6 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('doNotCopy'=>true),
 			'sql'                     => "char(1) NOT NULL default ''"
 		),
-		'alias' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['alias'],
-			'exclude'                 => true,
-			'search'                  => true,
-			'inputType'               => 'text',
-			'eval'                    => array('rgxp'=>'alias', 'unique'=>true, 'maxlength'=>128, 'tl_class'=>'w50'),
-			'save_callback' => array
-			(
-				array('tl_adressen', 'generateAlias')
-			),
-			'sql'                     => "varbinary(128) NOT NULL default ''"
-		), 
 		// Alte Felder, die mit runonce umkopiert werden
 		//'addBild' => array
 		//(
@@ -982,41 +896,6 @@ class tl_adressen extends Backend
 
 	}
 
-	/**
-	 * Generiert automatisch ein Alias aus Vorname und Nachname
-	 * @param mixed
-	 * @param \DataContainer
-	 * @return string
-	 * @throws \Exception
-	 */
-	public function generateAlias($varValue, DataContainer $dc)
-	{
-		$autoAlias = false;
-
-		// Generate alias if there is none
-		if ($varValue == '')
-		{
-			$autoAlias = true;
-			$varValue = standardize(\StringUtil::restoreBasicEntities($dc->activeRecord->nachname.'-'.$dc->activeRecord->vorname));
-		}
-
-		$objAlias = $this->Database->prepare("SELECT id FROM tl_adressen WHERE alias=?")
-								   ->execute($varValue);
-
-		// Check whether the news alias exists
-		if ($objAlias->numRows > 1 && !$autoAlias)
-		{
-			throw new Exception(sprintf($GLOBALS['TL_LANG']['ERR']['aliasExists'], $varValue));
-		}
-
-		// Add ID to alias
-		if ($objAlias->numRows && $autoAlias)
-		{
-			$varValue .= '-' . $dc->id;
-		}
-
-		return $varValue;
-	} 
 
 	/**
 	 * Generiert automatisch ein Alias aus Vorname und Nachname
@@ -1062,49 +941,6 @@ class tl_adressen extends Backend
 	{
 		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
 	}
-
-	/**
-	 * Trägt die Metdaten in "alt" und "caption" ein, wenn das Bild gewechselt wird und die Metafelder leer sind
-	 *
-	 * @param mixed         $varValue
-	 * @param DataContainer $dc
-	 *
-	 * @return mixed
-	 */
-	public function storeFileMetaInformation($varValue, DataContainer $dc)
-	{
-		if ($dc->activeRecord->singleSRC != $varValue)
-		{
-			$objFile = \FilesModel::findByUuid($varValue);
-			if ($objFile === null)
-			{
-				return $varValue;
-			}
-
-			$arrMeta = deserialize($objFile->meta);
-			if (empty($arrMeta))
-			{
-				return $varValue;
-			}
-
-			$strLanguage = 'de';
-			if (isset($arrMeta[$strLanguage]))
-			{
-				if (\Input::post('alt') == '' && !empty($arrMeta[$strLanguage]['title']))
-				{
-					\Input::setPost('alt', $arrMeta[$strLanguage]['title']);
-				}
-
-				if (\Input::post('caption') == '' && !empty($arrMeta[$strLanguage]['caption']))
-				{
-					\Input::setPost('caption', $arrMeta[$strLanguage]['caption']);
-				}
-			}
-
-		}
-
-		return $varValue;
-	} 
 
 	public function getReferenten(DataContainer $dc)
 	{

@@ -4,11 +4,16 @@
  * Paletten
  */
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_selectmails';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_alttemplate';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_addImage';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_viewFoto';
 
-$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_tpl,adresse_bildvorschau,adresse_viewfoto,adresse_selectmails;{adressbild_legend:hide},addImage;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_viewFoto;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
 
 // Subpalettes
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_selectmails'] = 'adresse_mails';
+$GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_alttemplate'] = 'adresse_tpl';
+$GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_viewFoto'] = 'adresse_bildvorschau,singleSRC';
 	
 /**
  * Felder
@@ -57,6 +62,44 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_zusatz'] = array
 	'sql'                  => "varchar(255) NOT NULL default ''"
 );
 
+// Zeigt das Standardfoto aus tl_adressen an
+$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_bildvorschau'] = array
+(
+	'exclude'              => true,
+	'input_field_callback' => array('tl_content_adresse', 'getThumbnail'),
+); 
+
+// Alternatives Foto aktivieren
+$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_viewFoto'] = array
+(
+	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_viewFoto'],
+	'exclude'              => true,
+	'filter'               => true,
+	'default'              => true,
+	'inputType'            => 'checkbox',
+	'eval'                 => array
+	(
+		'submitOnChange'   => true,
+		'tl_class'         => 'w50'
+	),
+	'sql'                  => "char(1) NOT NULL default ''"
+);
+
+// Alternatives Template aktivieren
+$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_alttemplate'] = array
+(
+	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_alttemplate'],
+	'exclude'              => true,
+	'filter'               => true,
+	'inputType'            => 'checkbox',
+	'eval'                 => array
+	(
+		'submitOnChange'   => true,
+		'tl_class'         => 'clr w50'
+	),
+	'sql'                  => "char(1) NOT NULL default ''"
+);
+
 // Template zuweisen
 $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_tpl'] = array
 (
@@ -67,23 +110,6 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_tpl'] = array
 	'eval'                 => array('tl_class'=>'w50 clr'),
 	'sql'                  => "varchar(32) NOT NULL default ''"
 ); 
-
-// Zeigt das Standardfoto aus tl_adressen an
-$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_bildvorschau'] = array
-(
-	'exclude'              => true,
-	'input_field_callback' => array('tl_content_adresse', 'getThumbnail'),
-); 
-
-// Foto anzeigen ja/nein?
-$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_viewfoto'] = array
-(
-	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_viewfoto'],
-	'inputType'            => 'checkbox',
-	'default'              => true,
-	'eval'                 => array('tl_class' => 'w50', 'isBoolean' => true),
-	'sql'                  => "char(1) NOT NULL default ''",
-);
 
 // Nur bestimmte Adressen aktivieren einschalten
 $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_selectmails'] = array
@@ -115,6 +141,9 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_mails'] = array
 	'sql'                  => "varchar(64) NOT NULL default ''"
 );
 
+// Feld singleSRC dynamisch ändern bei Adressen
+$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['load_callback'][] =  array('tl_content_adresse', 'setSingleSrcFlags');
+
 /*****************************************
  * Klasse tl_content_adresse
  *****************************************/
@@ -132,6 +161,31 @@ class tl_content_adresse extends Backend
 	}
 
 	/**
+	 * Dynamically add flags to the "singleSRC" field
+	 *
+	 * @param mixed         $varValue
+	 * @param DataContainer $dc
+	 *
+	 * @return mixed
+	 */
+	public function setSingleSrcFlags($varValue, DataContainer $dc)
+	{
+		if($dc->activeRecord)
+		{
+			// Content-Element temporär ändern
+			if($dc->activeRecord->type == 'adressen')
+			{
+				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['mandatory'] = false;
+				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['tl_class'] = 'w50';
+				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['extensions'] = Config::get('validImageTypes');
+				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['label'] = &$GLOBALS['TL_LANG']['tl_content']['adresse_singleSRC'];
+			}
+		}
+
+		return $varValue;
+	}
+
+	/**
 	 * Funktion editAdresse
 	 * @param \DataContainer
 	 * @return string
@@ -143,17 +197,20 @@ class tl_content_adresse extends Backend
 	
 	public function getAdressenTemplates()
 	{
-		return $this->getTemplateGroup('adresse_');
+		return $this->getTemplateGroup('ce_adressen_');
 	} 
 
 	public function getAdressenListe(DataContainer $dc)
 	{
 		$array = array();
-		$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen ORDER BY alias ASC")->execute();
+		$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen ORDER BY nachname ASC, vorname ASC")->execute();
 		while($objAdresse->next())
 		{
-			($objAdresse->aktiv) ? $aktivstatus = '' : $aktivstatus = $GLOBALS['TL_LANG']['tl_content']['adresse_nichtaktiv'];
-			($objAdresse->vorname) ? $array[$objAdresse->id] = $objAdresse->nachname.','.$objAdresse->vorname.$aktivstatus : $array[$objAdresse->id] = $objAdresse->nachname.$aktivstatus;
+			// Aktivstatus der Adresse ermitteln
+			$aktivstatus = $objAdresse->aktiv ? '' : $GLOBALS['TL_LANG']['tl_content']['adresse_nichtaktiv'];
+			// Adresse zuordnen
+			$array[$objAdresse->id] = $objAdresse->nachname ? $objAdresse->nachname.','.$objAdresse->vorname.$aktivstatus : '(Firma) '.$objAdresse->firma.$aktivstatus;
+
 		}
 		return $array;
 
@@ -179,47 +236,34 @@ class tl_content_adresse extends Backend
 
 	public function getThumbnail(DataContainer $dc)
 	{
-		$keinbild = '
-<div class="w50 clr">
-  <h3><label>'.$GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau_fehlt'][0].'</label></h3>
-  <p class="tl_help tl_tip" title="">'.$GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau_fehlt'][1].'</p>
-</div>'; 
-		
-		//echo "<pre>";
-		//print_r($dc->activeRecord);
-		//echo "</pre>";
 
 		if($dc->activeRecord->adresse_id)
 		{
 			$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen WHERE id=?")->execute($dc->activeRecord->adresse_id);
-			if($objAdresse->addImage)
+
+			// Bild extrahieren
+			if($objAdresse->singleSRC)
 			{
-				$strBild = '';
-				(version_compare(VERSION, '3.2', '>=')) ? $objBild = \FilesModel::findByUuid($objAdresse->singleSRC) : $objBild = \FilesModel::findByPk($objAdresse->singleSRC);
-				
-				// Add cover image
-				if($objBild !== null)
-				{
-					$size = unserialize($objAdresse->size);
-					if(!$size[0] && !$size[1])
-					{
-						// Breite/Höhe nicht definiert, deshalb festlegen auf 100
-						$size[0] = 100;
-						$size[1] = 100;
-					}
-					$strBild = \Image::getHtml(\Image::get($objBild->path, $size[0], $size[1], $size[2]));
-				}
-				else $strBild = $GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau_leer'];
-				return '
-<div class="w50 clr">
+				$objFile = \FilesModel::findByPk($objAdresse->singleSRC);
+			}
+			else
+			{
+				$objFile = \FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+			}
+			$objBild = new \stdClass();
+			\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
+
+			$strBild = \Image::getHtml(\Image::get($objBild->src, $objBild->arrSize[0], $objBild->arrSize[1], $objBild->arrSize[2]));
+
+			return '
+<div class="w50 clr widget">
   <h3><label>'.$GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau'][0].'</label></h3>
   '.$strBild.'
   <p class="tl_help tl_tip" title="">'.$GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau'][1].'</p>
 </div>';
-			} 
-			else return $keinbild;
+
 		}
-		else return $keinbild;
+		else return '';
 	}
 
 }

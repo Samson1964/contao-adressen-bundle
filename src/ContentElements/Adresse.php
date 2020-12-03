@@ -9,7 +9,7 @@ class Adresse extends \ContentElement
 	 * Template
 	 * @var string
 	 */
-	protected $strTemplate = 'adresse_default';
+	protected $strTemplate = 'ce_adressen_default';
 
 	/**
 	 * Generate the module
@@ -25,9 +25,8 @@ class Adresse extends \ContentElement
 			// Adresse gefunden
 			if($objAdresse)
 			{
-				// Template zuweisen
-				if(!$this->adresse_tpl) $this->adresse_tpl = $this->strTemplate;
-				$this->Template = new \FrontendTemplate($this->adresse_tpl);
+				// Alternatives Template zuweisen
+				if($this->adresse_alttemplate) $this->Template = new \FrontendTemplate($this->adresse_tpl);
 
 				// Name zusammenbauen
 				$this->Template->name = $objAdresse->nachname;
@@ -112,59 +111,35 @@ class Adresse extends \ContentElement
 					if($objAdresse->email6 && $mailErlaubtArr[6]) $email[] = $objAdresse->email6;
 				}
 
-				// Bild-Elemente erstellen
-				if($this->adresse_viewfoto)
+				// Bild extrahieren
+				if($this->singleSRC)
 				{
-					// Fotoausgabe erwünscht, jetzt die Quelle bestimmen
-					if($this->addImage && $this->singleSRC != '')
-					{
-						// Bild aus Inhaltselement verwenden!
-						if($this->singleSRC)
-						{
-							(version_compare(VERSION, '3.2', '>=')) ? $objModel = \FilesModel::findByUuid($this->singleSRC) : $objModel = \FilesModel::findByPk($this->singleSRC);
-							if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
-							{
-								$bildurl = $objModel->path;
-								$bildarray['singleSRC'] = $bildurl;
-								$bildarray['alt'] = $this->alt;
-								$bildarray['size'] = $this->size;
-								$bildarray['imagemargin'] = $this->imagemargin;
-								$bildarray['imageUrl'] = $this->imageUrl;
-								$bildarray['fullsize'] = $this->fullsize;
-								$bildarray['caption'] = $this->caption;
-								$bildarray['floating'] = $this->floating;
-								// Templatewerte des Bildes von Contao zusammenbauen lassen
-								$this->addImageToTemplate($this->Template, $bildarray); 
-							}
-						}
-					}
-					elseif($objAdresse->addImage && $objAdresse->singleSRC != '')
-					{
-						// Bild aus tl_adressen verwenden!
-						if($objAdresse->singleSRC)
-						{
-							(version_compare(VERSION, '3.2', '>=')) ? $objModel = \FilesModel::findByUuid($objAdresse->singleSRC) : $objModel = \FilesModel::findByPk($objAdresse->singleSRC);
-							if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
-							{
-								$bildurl = $objModel->path;
-								$objAdresse->singleSRC = $bildurl;
-								// Templatewerte des Bildes von Contao zusammenbauen lassen
-								$this->addImageToTemplate($this->Template, $objAdresse->row()); 
-							}
-						}
-					}
+					// Ersatzfoto im Inhaltselement definiert
+					$objFile = \FilesModel::findByUuid($this->singleSRC);
 				}
+				elseif($objAdresse->singleSRC)
+				{
+					// Foto aus tl_adressen
+					$objFile = \FilesModel::findByPk($objAdresse->singleSRC);
+				}
+				else
+				{
+					// Standardfoto
+					$objFile = \FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+				}
+				$objBild = new \stdClass();
+				\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
 
 				// Daten aus tl_adressen in das Template schreiben
 				$this->Template->id            = $objAdresse->id;
 				$this->Template->nachname      = $objAdresse->nachname;
-				$this->Template->vorname       = $objAdresse->vorname ;
-				$this->Template->titel         = $objAdresse->titel   ;
-				$this->Template->firma         = $objAdresse->firma   ;
+				$this->Template->vorname       = $objAdresse->vorname;
+				$this->Template->titel         = $objAdresse->titel;
+				$this->Template->firma         = $objAdresse->firma;
 				$this->Template->adressen      = $this->getAdressen($objAdresse); // Übergabe der Adressen im alten und neuen Format
-				$this->Template->strasse       = $objAdresse->strasse ;
-				$this->Template->plz           = $objAdresse->plz     ;
-				$this->Template->ort           = $objAdresse->ort     ;
+				$this->Template->strasse       = $objAdresse->strasse;
+				$this->Template->plz           = $objAdresse->plz;
+				$this->Template->ort           = $objAdresse->ort;
 				$this->Template->telefon       = $telefon;
 				$this->Template->telefon_fest  = $telefon_fest;
 				$this->Template->telefon_mobil = $telefon_mobil;
@@ -172,24 +147,29 @@ class Adresse extends \ContentElement
 				$this->Template->email         = $email;
 				$this->Template->homepage      = $objAdresse->homepage;
 				$this->Template->facebook      = $objAdresse->facebook;
-				$this->Template->twitter       = $objAdresse->twitter ;
-				$this->Template->google        = $objAdresse->google  ;
-				$this->Template->icq           = $objAdresse->icq     ;
-				$this->Template->yahoo         = $objAdresse->yahoo   ;
-				$this->Template->aim           = $objAdresse->aim     ;
-				$this->Template->msn           = $objAdresse->msn     ;
-				$this->Template->irc           = $objAdresse->irc     ;
-				$this->Template->viewfoto      = $this->adresse_viewfoto;
-				$this->Template->text          = $objAdresse->text    ;
-				$this->Template->info          = $objAdresse->info    ;
-				$this->Template->aktiv         = $objAdresse->aktiv   ;
+				$this->Template->twitter       = $objAdresse->twitter;
+				$this->Template->instagram     = $objAdresse->instagram;
+				$this->Template->whatsapp      = $objAdresse->whatsapp;
+				$this->Template->threema       = $objAdresse->threema;
+				$this->Template->telegram      = $objAdresse->telegram;
+				$this->Template->skype         = $objAdresse->skype;
+				$this->Template->irc           = $objAdresse->irc;
+				$this->Template->text          = $objAdresse->text;
+				$this->Template->info          = $objAdresse->info;
+				$this->Template->aktiv         = $objAdresse->aktiv;
+
+				// Foto
+				$this->Template->viewFoto      = $this->adresse_viewFoto;
+				$this->Template->image         = $objBild->singleSRC;
+				$this->Template->imageSize     = $objBild->imgSize;
+				$this->Template->imageTitle    = $objBild->imageTitle;
+				$this->Template->imageAlt      = $objBild->alt;
+				$this->Template->imageCaption  = $objBild->caption;
+				$this->Template->thumbnail     = $objBild->src;
 
 				// Daten aus tl_content in das Template schreiben
-				$this->Template->funktion    = $this->adresse_funktion;
-				$this->Template->zusatz      = $this->adresse_zusatz;
-
-				// Standardbildausrichtung setzen
-				if(!$this->Template->floatClass) $this->Template->floatClass = 'float_left'; 
+				$this->Template->funktion      = $this->adresse_funktion;
+				$this->Template->zusatz        = $this->adresse_zusatz;
 			}
 		}
 
