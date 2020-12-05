@@ -159,7 +159,7 @@ class Adresse extends \ContentElement
 				$this->Template->aktiv         = $objAdresse->aktiv;
 
 				// Foto
-				$this->Template->viewFoto      = $this->adresse_viewFoto;
+				$this->Template->viewFoto      = $this->adresse_addImage;
 				$this->Template->image         = $objBild->singleSRC;
 				$this->Template->imageSize     = $objBild->imgSize;
 				$this->Template->imageTitle    = $objBild->imageTitle;

@@ -6,14 +6,14 @@
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_selectmails';
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_alttemplate';
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_addImage';
-$GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_viewFoto';
+
 
 $GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_viewFoto;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
 
 // Subpalettes
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_selectmails'] = 'adresse_mails';
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_alttemplate'] = 'adresse_tpl';
-$GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_viewFoto'] = 'adresse_bildvorschau,singleSRC';
+$GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_addImage'] = 'adresse_bildvorschau,singleSRC';
 	
 /**
  * Felder
@@ -70,9 +70,9 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_bildvorschau'] = array
 ); 
 
 // Alternatives Foto aktivieren
-$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_viewFoto'] = array
+$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_addImage'] = array
 (
-	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_viewFoto'],
+	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_addImage'],
 	'exclude'              => true,
 	'filter'               => true,
 	'default'              => true,
@@ -82,7 +82,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_viewFoto'] = array
 		'submitOnChange'   => true,
 		'tl_class'         => 'w50'
 	),
-	'sql'                  => "char(1) NOT NULL default ''"
+	'sql'                  => "char(1) NOT NULL default '1'"
 );
 
 // Alternatives Template aktivieren
@@ -253,7 +253,7 @@ class tl_content_adresse extends Backend
 			$objBild = new \stdClass();
 			\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
 
-			$strBild = \Image::getHtml(\Image::get($objBild->src, $objBild->arrSize[0], $objBild->arrSize[1], $objBild->arrSize[2]));
+			$strBild = '<img src="'.$objBild->src.'" alt="'.$objBild->alt.'" title="'.$objBild->imageTitle.'" '.$objBild->imgSize.'>';
 
 			return '
 <div class="w50 clr widget">

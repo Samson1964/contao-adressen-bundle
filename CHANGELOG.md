@@ -1,5 +1,10 @@
 # Adressen Changelog
 
+## Version 2.0.1 (2020-11-05)
+
+* Fix: tl_content Foto anzeigen
+* Fix: Template ce_adressen_default
+
 ## Version 2.0.0 (2020-11-03)
 
 * Add: In den Einstellungen kann ein Standardbild und die allgemeine Bildgröße gesetzt werden

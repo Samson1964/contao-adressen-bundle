@@ -2,7 +2,7 @@
 
 <?php $this->block('content'); ?>
 
-	<div class="adresse">
+	<div class="adresse adresse_default">
 	
 		<?php if($this->id && $this->aktiv): ?>
 
@@ -35,21 +35,65 @@
 			<?php if($this->adresse): ?>
 				<span class="adr_adresse"><?= $this->adresse ?></span><br />
 			<?php endif; ?>
-	
-			<?php if($this->telefon): ?>
-				<span class="telefon"><?= $this->telefon ?></span><br />
+
+			<?php if($this->telefon_fest): ?>
+				<?php $i = 0; ?>
+				<?php foreach($this->telefon_fest as $item): ?>
+					<?php $i++; ?>
+					<?php if($i == 1 && count($this->telefon_fest) == 1): ?>
+						<span class="adr_telefon"><?= $item ?></span><br />
+					<?php elseif($i == 1 && count($this->telefon_fest) > 1): ?>
+						<span class="adr_telefon"><?= $item ?></span>,
+					<?php elseif($i == count($this->telefon_fest)): ?>
+						<span><?= $item ?></span><br />
+					<?php else: ?>
+						<span><?= $item ?></span>,
+					<?php endif; ?>
+				<?php endforeach; ?>
 			<?php endif; ?>
-	
-			<?php if($this->handy): ?>
-				<span class="handy"><?= $this->handy ?></span><br />
+    		
+			<?php if($this->telefon_mobil): ?>
+				<?php $i = 0; ?>
+				<?php foreach($this->telefon_mobil as $item): ?>
+					<?php $i++; ?>
+					<?php if($i == 1 && count($this->telefon_mobil) == 1): ?>
+						<span class="adr_mobil"><?= $item ?></span><br />
+					<?php elseif($i == 1 && count($this->telefon_mobil) > 1): ?>
+						<span class="adr_mobil"><?= $item ?></span>,
+					<?php elseif($i == count($this->telefon_mobil)): ?>
+						<span><?= $item ?></span><br />
+					<?php else: ?>
+						<span><?= $item ?></span>,
+					<?php endif; ?>
+				<?php endforeach; ?>
 			<?php endif; ?>
-	
+    		
 			<?php if($this->telefax): ?>
-				<span class="fax"><?= $this->telefax ?></span><br />
+				<?php $i = 0; ?>
+				<?php foreach($this->telefax as $item): ?>
+					<?php $i++; ?>
+					<?php if($i == 1 && count($this->telefax) == 1): ?>
+						<span class="adr_telefax"><?= $item ?></span><br />
+					<?php elseif($i == 1 && count($this->telefax) > 1): ?>
+						<span class="adr_telefax"><?= $item ?></span>,
+					<?php elseif($i == count($this->telefax)): ?>
+						<span><?= $item ?></span><br />
+					<?php else: ?>
+						<span><?= $item ?></span>,
+					<?php endif; ?>
+				<?php endforeach; ?>
 			<?php endif; ?>
-	
+    		
 			<?php if($this->email): ?>
-				<span><?= $this->email ?></span><br />
+				<?php $i = 0; ?>
+				<?php foreach($this->email as $item): ?>
+					<?php $i++; ?>
+					<?php if($i == count($this->email)): ?>
+						<span class="adr_email">{{email::<?= $item ?>}}</span><br />
+					<?php else: ?>
+						<span class="adr_email">{{email::<?= $item ?>}}</span>,
+					<?php endif; ?>
+				<?php endforeach; ?>
 			<?php endif; ?>
 	
 			<?php if($this->homepage): ?>
