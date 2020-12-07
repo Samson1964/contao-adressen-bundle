@@ -8,7 +8,7 @@ $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_alttem
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_addImage';
 
 
-$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_viewFoto;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_addImage;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
 
 // Subpalettes
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_selectmails'] = 'adresse_mails';

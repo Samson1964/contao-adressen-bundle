@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.0.2 (2020-11-07)
+
+* Fix: Falsche Spalte in Palette tl_content - adresse_viewFoto statt adresse_addImage
+
 ## Version 2.0.1 (2020-11-05)
 
 * Fix: tl_content Foto anzeigen
