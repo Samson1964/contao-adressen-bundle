@@ -14,7 +14,7 @@ class Adressen_Frontend extends \Frontend
 	 * Template
 	 * @var string
 	 */
-	protected $strTemplate = 'ce_adressen_default';
+	protected $strTemplate = 'ce_adressen_inserttag';
 
 	public function adresse_ersetzen($strTag)
 	{

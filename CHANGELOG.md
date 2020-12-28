@@ -1,8 +1,12 @@
 # Adressen Changelog
 
+## Version 2.0.4 (2020-12-28)
+
+* Fix: Adressen_Frontend.php falsches Template - ce_adressen_inserttag wiederhergestellt (vorher ce_adressen)
+
 ## Version 2.0.3 (2020-12-28)
 
-* Fix: Adressen_Frontend.php falsches Template - ce_adressen statt ce_adressen-Default
+* Fix: Adressen_Frontend.php falsches Template - ce_adressen statt ce_adressen_default
 
 ## Version 2.0.2 (2020-11-07)
 
