@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.0.3 (2020-12-28)
+
+* Fix: Adressen_Frontend.php falsches Template - ce_adressen statt ce_adressen-Default
+
 ## Version 2.0.2 (2020-11-07)
 
 * Fix: Falsche Spalte in Palette tl_content - adresse_viewFoto statt adresse_addImage
