@@ -1,5 +1,11 @@
 # Adressen Changelog
 
+## Version 2.0.5 (2021-01-13)
+
+* Fix: http:// wird angezeigt im Frontend wenn keine Homepage hinterlegt ist => save_callback im homepage-Feld eingebaut
+* Fix: Bild ersetzen funktioniert nicht korrekt. Im Template ce_adressen_default wurde die falsche Variable verwendet.
+* Fix: Im Inhaltselement war das Bearbeitungspopup nicht richtig eingebaut
+
 ## Version 2.0.4 (2020-12-28)
 
 * Fix: Adressen_Frontend.php falsches Template - ce_adressen_inserttag wiederhergestellt (vorher ce_adressen)

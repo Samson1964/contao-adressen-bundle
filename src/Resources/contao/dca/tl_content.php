@@ -28,10 +28,11 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_id'] = array
 	'inputType'            => 'select',
 	'eval'                 => array
 	(
-		'mandatory'=>false, 
-		'multiple'=>false, 
-		'chosen'=>true,
-		'submitOnChange'=>true
+		'mandatory'        => false, 
+		'multiple'         => false, 
+		'chosen'           => true,
+		'submitOnChange'   => true,
+		'tl_class'         => 'wizard'
 	),
 	'wizard'               => array
 	(
@@ -192,7 +193,16 @@ class tl_content_adresse extends Backend
 	 */
 	public function editAdresse(DataContainer $dc)
 	{
-		return ($dc->value < 1) ? '' : ' <a href="contao/main.php?do=adressen&amp;table=tl_adressen&amp;act=edit&amp;id=' . $dc->value . '&amp;popup=1&amp;rt=' . REQUEST_TOKEN . '" title="' . sprintf(specialchars($GLOBALS['TL_LANG']['tl_content']['editalias'][1]), $dc->value) . '" style="padding-left:3px" onclick="Backend.openModalIframe({\'width\':765,\'title\':\'' . specialchars(str_replace("'", "\\'", sprintf($GLOBALS['TL_LANG']['tl_content']['editalias'][1], $dc->value))) . '\',\'url\':this.href});return false">' . Image::getHtml('alias.gif', $GLOBALS['TL_LANG']['tl_content']['editalias'][0], 'style="vertical-align:top"') . '</a>';
+
+		if($dc->value < 1)
+		{
+			return '';
+		}
+
+		$title = sprintf($GLOBALS['TL_LANG']['tl_content']['editalias'], $dc->value);
+
+		return ' <a href="contao/main.php?do=adressen&amp;table=tl_adressen&amp;act=edit&amp;id=' . $dc->value . '&amp;popup=1&amp;&amp;rt=' . REQUEST_TOKEN . '" title="' . StringUtil::specialchars($title) . '" onclick="Backend.openModalIframe({\'title\':\'' . StringUtil::specialchars(str_replace("'", "\\'", $title)) . '\',\'url\':this.href});return false">' . Image::getHtml('alias.svg', $title) . '</a>';
+		
 	} 
 	
 	public function getAdressenTemplates()

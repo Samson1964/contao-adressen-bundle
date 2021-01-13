@@ -619,6 +619,10 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'sorting'                 => true,
 			'flag'                    => 1,
 			'default'                 => 'http://',
+			'save_callback'           => array
+			(
+				array('tl_adressen', 'saveHomepage')
+			),
 			'search'                  => false,
 			'eval'                    => array('mandatory'=>false, 'tl_class'=>'long clr'),
 			'sql'                     => "text NULL"
@@ -778,24 +782,6 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('doNotCopy'=>true),
 			'sql'                     => "char(1) NOT NULL default ''"
 		),
-		// Alte Felder, die mit runonce umkopiert werden
-		//'addBild' => array
-		//(
-		//	'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['addBild'],
-		//	'exclude'                 => true,
-		//	'inputType'               => 'checkbox',
-		//	'eval'                    => array('submitOnChange'=>true),
-		//	'sql'                     => "char(1) NOT NULL default ''"
-		//),
-		//'bild' => array
-		//(
-		//	'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['bild'],
-		//	'inputType'               => 'fileTree',
-		//	'exclude'                 => true,
-		//	'flag'                    => 1,
-		//	'eval'                    => array('mandatory'=>false, 'files'=>true, 'files_only'=>true, 'fieldType'=>'radio', 'extensions'=>'jpg,gif,png', 'tl_class'=>'w50 clr'),
-		//	'sql'                     => "varchar(255) NOT NULL default ''"
-		//),
 		'prozentx' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['prozentx'],
@@ -897,6 +883,13 @@ class tl_adressen extends Backend
 	}
 
 
+	public function saveHomepage($varValue, DataContainer $dc)
+	{
+		// Ersetzt http:// wenn nichts dahinter steht
+		if($varValue == 'http://') $varValue = '';
+		return $varValue;
+	}
+	
 	/**
 	 * Generiert automatisch ein Alias aus Vorname und Nachname
 	 * @param mixed

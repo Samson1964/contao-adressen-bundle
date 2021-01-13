@@ -2,13 +2,15 @@
 
 <?php $this->block('content'); ?>
 
+<?php $this->showTemplateVars() ?>
+
 	<div class="adresse adresse_default">
 	
 		<?php if($this->id && $this->aktiv): ?>
 
 			<?php if($this->viewFoto): ?>
 				<figure class="image_container float_left">
-					<a href="<?= $this->singleSRC ?>" data-lightbox="adresse<?= $this->id ?>"><img src="<?= $this->thumbnail ?>" alt="<?= $this->imageAlt ?>" title="<?= $this->imageTitle ?>"></a>
+					<a href="<?= $this->image ?>" data-lightbox="adresse<?= $this->id ?>"><img src="<?= $this->thumbnail ?>" alt="<?= $this->imageAlt ?>" title="<?= $this->imageTitle ?>"></a>
 					<?php if ($this->imageCaption): ?>
 						<figcaption class="caption"><?= $this->imageCaption ?></figcaption>
 					<?php endif; ?>
