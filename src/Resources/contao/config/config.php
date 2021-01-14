@@ -12,8 +12,8 @@ $GLOBALS["BE_MOD"]["content"]["adressen"] = array(
  */
 $GLOBALS['FE_MOD']['adressen'] = array
 (
-	'wertungsreferenten' => 'Schachbulle\ContaoAdressenBundle\Classes\Wertungsreferenten',
-	'adressensuche'      => 'Schachbulle\ContaoAdressenBundle\Classes\Suche',
+	'adressen_wertungsreferenten' => 'Schachbulle\ContaoAdressenBundle\Modules\Wertungsreferenten',
+	'adressen_suche'              => 'Schachbulle\ContaoAdressenBundle\Classes\Suche',
 );  
 
 

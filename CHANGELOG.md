@@ -1,5 +1,11 @@
 # Adressen Changelog
 
+## Version 2.1.0 (2021-01-14)
+
+* Change: Ausgabe Wertungsreferenten umprogrammiert (Tabelle statt Einzeldaten)
+* Add: Template mod_adressen_referenten (ersetzt adresse_referenten)
+* Add: FE-Modul Wertungsreferenten überarbeitet, allerdings funktioniert odd/even in der Tabelle nicht
+
 ## Version 2.0.6 (2021-01-14)
 
 * Fix: Debugausgabe im Template ce_adressen_default entfernt
