@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.0.6 (2021-01-14)
+
+* Fix: Debugausgabe im Template ce_adressen_default entfernt
+
 ## Version 2.0.5 (2021-01-13)
 
 * Fix: http:// wird angezeigt im Frontend wenn keine Homepage hinterlegt ist => save_callback im homepage-Feld eingebaut

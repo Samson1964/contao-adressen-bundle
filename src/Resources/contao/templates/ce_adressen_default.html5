@@ -2,8 +2,6 @@
 
 <?php $this->block('content'); ?>
 
-<?php $this->showTemplateVars() ?>
-
 	<div class="adresse adresse_default">
 	
 		<?php if($this->id && $this->aktiv): ?>
