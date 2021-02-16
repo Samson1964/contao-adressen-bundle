@@ -9,6 +9,7 @@ $GLOBALS['TL_LANG']['tl_content']['adresse_mails'] = array('E-Mail-Adressen ausw
 
 $GLOBALS['TL_LANG']['tl_content']['adressefoto_legend'] = 'Foto';
 $GLOBALS['TL_LANG']['tl_content']['adresse_addImage'] = array('Foto anzeigen', 'Foto im Frontend anzeigen');
+$GLOBALS['TL_LANG']['tl_content']['adresse_altformat'] = array('Bildformat', 'Alternatives Bildformat einstellen');
 $GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau'] = array('Zugeordnetes Foto', 'Das Bild wird in der Frontendgröße angezeigt.');
 $GLOBALS['TL_LANG']['tl_content']['adresse_singleSRC'] = array('Foto ersetzen durch:', 'Datei aus dem Dateisystem wählen');
 

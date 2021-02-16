@@ -127,8 +127,21 @@ class Adresse extends \ContentElement
 					// Standardfoto
 					$objFile = \FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
 				}
+
+				// Bildformat auswerten
+				if($this->adresse_altformat)
+				{
+					// Format aus System -> Einstellungen überschreiben
+					$imageSize = unserialize($this->size);
+				}
+				else
+				{
+					// Format aus System -> Einstellungen benutzen
+					$imageSize = unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize']);
+				}
+
 				$objBild = new \stdClass();
-				\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
+				\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
 
 				// Daten aus tl_adressen in das Template schreiben
 				$this->Template->id            = $objAdresse->id;

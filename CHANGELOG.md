@@ -1,5 +1,10 @@
 # Adressen Changelog
 
+## Version 2.1.1 (2021-02-16)
+
+* Fix: Kein alternatives Bildformat möglich
+* Add: Auswahl eines alternativen Bildformats im Inhaltselement
+
 ## Version 2.1.0 (2021-01-14)
 
 * Change: Ausgabe Wertungsreferenten umprogrammiert (Tabelle statt Einzeldaten)

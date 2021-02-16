@@ -6,14 +6,16 @@
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_selectmails';
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_alttemplate';
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_addImage';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_altformat';
 
 
-$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_addImage;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_addImage,adresse_altformat;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
 
 // Subpalettes
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_selectmails'] = 'adresse_mails';
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_alttemplate'] = 'adresse_tpl';
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_addImage'] = 'adresse_bildvorschau,singleSRC';
+$GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_altformat'] = 'size';
 	
 /**
  * Felder
@@ -84,6 +86,22 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_addImage'] = array
 		'tl_class'         => 'w50'
 	),
 	'sql'                  => "char(1) NOT NULL default '1'"
+);
+
+// Alternatives Foto aktivieren
+$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_altformat'] = array
+(
+	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_altformat'],
+	'exclude'              => true,
+	'filter'               => true,
+	'default'              => true,
+	'inputType'            => 'checkbox',
+	'eval'                 => array
+	(
+		'submitOnChange'   => true,
+		'tl_class'         => 'w50'
+	),
+	'sql'                  => "char(1) NOT NULL default ''"
 );
 
 // Alternatives Template aktivieren
