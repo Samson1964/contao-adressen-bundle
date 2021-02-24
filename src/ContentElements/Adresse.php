@@ -9,7 +9,7 @@ class Adresse extends \ContentElement
 	 * Template
 	 * @var string
 	 */
-	protected $strTemplate = 'ce_adressen_default';
+	protected $strTemplate = 'ce_adressen';
 
 	/**
 	 * Generate the module
@@ -26,7 +26,7 @@ class Adresse extends \ContentElement
 			if($objAdresse)
 			{
 				// Alternatives Template zuweisen
-				if($this->adresse_alttemplate) $this->Template = new \FrontendTemplate($this->adresse_tpl);
+				//if($this->adresse_alttemplate) $this->Template = new \FrontendTemplate($this->adresse_tpl);
 
 				// Name zusammenbauen
 				$this->Template->name = $objAdresse->nachname;

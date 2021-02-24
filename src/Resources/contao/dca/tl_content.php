@@ -9,7 +9,7 @@ $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_addIma
 $GLOBALS['TL_DCA']['tl_content']['palettes']['__selector__'][] = 'adresse_altformat';
 
 
-$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_addImage,adresse_altformat;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes']['adressen'] = '{type_legend},type,headline;{adresse_legend},adresse_id,adresse_funktion,adresse_zusatz,adresse_selectmails;{adressefoto_legend},adresse_addImage,adresse_altformat;{template_legend:hide},customTpl;{adresstemplate_legend:hide},adresse_alttemplate;{protected_legend:hide},protected;{expert_legend:hide},guest,cssID,space;{invisible_legend:hide},invisible,start,stop';
 
 // Subpalettes
 $GLOBALS['TL_DCA']['tl_content']['subpalettes']['adresse_selectmails'] = 'adresse_mails';
@@ -104,32 +104,6 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_altformat'] = array
 	'sql'                  => "char(1) NOT NULL default ''"
 );
 
-// Alternatives Template aktivieren
-$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_alttemplate'] = array
-(
-	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_alttemplate'],
-	'exclude'              => true,
-	'filter'               => true,
-	'inputType'            => 'checkbox',
-	'eval'                 => array
-	(
-		'submitOnChange'   => true,
-		'tl_class'         => 'clr w50'
-	),
-	'sql'                  => "char(1) NOT NULL default ''"
-);
-
-// Template zuweisen
-$GLOBALS['TL_DCA']['tl_content']['fields']['adresse_tpl'] = array
-(
-	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_tpl'],
-	'exclude'              => true,
-	'inputType'            => 'select',
-	'options_callback'     => array('tl_content_adresse', 'getAdressenTemplates'),
-	'eval'                 => array('tl_class'=>'w50 clr'),
-	'sql'                  => "varchar(32) NOT NULL default ''"
-); 
-
 // Nur bestimmte Adressen aktivieren einschalten
 $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_selectmails'] = array
 (
@@ -223,11 +197,6 @@ class tl_content_adresse extends Backend
 		
 	} 
 	
-	public function getAdressenTemplates()
-	{
-		return $this->getTemplateGroup('ce_adressen_');
-	} 
-
 	public function getAdressenListe(DataContainer $dc)
 	{
 		$array = array();

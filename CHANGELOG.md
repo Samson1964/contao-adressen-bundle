@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.1.2 (2021-02-24)
+
+* Change: Alternatives Template umgestellt auf customTpl des Cores
+
 ## Version 2.1.1 (2021-02-16)
 
 * Fix: Kein alternatives Bildformat möglich
