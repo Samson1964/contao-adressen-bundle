@@ -19,6 +19,10 @@
 				<span class="adr_funktion"><?= $this->funktion ?>:</span>
 			<?php endif; ?>
 	
+			<?php if($this->zusatz): ?>
+				<span class="adr_zusatz"><?= $this->zusatz ?>:</span>
+			<?php endif; ?>
+
 			<?php if($this->funktioninfo): ?>
 				<span class="adr_funktioninfo"><?= $this->funktioninfo ?></span>
 			<?php endif; ?>

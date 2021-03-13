@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.1.3 (2021-03-13)
+
+* Fix: $this->zusatz (tl_content.adresse_zusatz) wurde im Template nicht berücksichtigt
+
 ## Version 2.1.2 (2021-02-24)
 
 * Change: Alternatives Template umgestellt auf customTpl des Cores
