@@ -94,7 +94,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_altformat'] = array
 	'label'                => &$GLOBALS['TL_LANG']['tl_content']['adresse_altformat'],
 	'exclude'              => true,
 	'filter'               => true,
-	'default'              => true,
+	'default'              => false,
 	'inputType'            => 'checkbox',
 	'eval'                 => array
 	(

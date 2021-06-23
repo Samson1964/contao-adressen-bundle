@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.1.4 (2021-06-23)
+
+* Fix: tl_content.adresse_altformat von true auf false geändert
+
 ## Version 2.1.3 (2021-03-13)
 
 * Fix: $this->zusatz (tl_content.adresse_zusatz) wurde im Template nicht berücksichtigt
