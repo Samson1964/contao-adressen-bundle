@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.1.5 (2021-07-06)
+
+* Fix: Auto-Inkrement und primärer Schlüssel id fehlerhaft
+
 ## Version 2.1.4 (2021-06-23)
 
 * Fix: tl_content.adresse_altformat von true auf false geändert

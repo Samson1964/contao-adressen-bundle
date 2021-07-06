@@ -117,9 +117,6 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	(
 		'id' => array
 		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['id'],
-			'sorting'                 => true,
-			'search'                  => true,
 			'sql'                     => "int(10) unsigned NOT NULL auto_increment"
 		),
 		'tstamp' => array
