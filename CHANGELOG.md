@@ -1,5 +1,14 @@
 # Adressen Changelog
 
+## Version 2.2.0 (2023-02-27)
+
+* Add: Abhängigkeit codefog/contao-haste
+* Change: tl_adressen.aktiv inkl. Haste-Toggle-Funktion
+* Change: tl_adressen_categories.active inkl. Haste-Toggle-Funktion
+* Delete: tl_adressen_categories -> alte Toggle-Funktionen
+* Change: Inhaltselement Adresse -> zusätzliche Ausgabe des Ortes bei Adressauswahl
+* Add: Spezialfilter für das Anzeigen von doppelten E-Mail-Adressen
+
 ## Version 2.1.5 (2021-07-06)
 
 * Fix: Auto-Inkrement und primärer Schlüssel id fehlerhaft

@@ -94,6 +94,9 @@ $GLOBALS['TL_LANG']['tl_adressen']['source'] = array('Quelle', 'Ursprüngliche Q
 $GLOBALS['TL_LANG']['tl_adressen']['aktiv_legende'] = 'Aktivieren';
 $GLOBALS['TL_LANG']['tl_adressen']['aktiv'] = array('Aktiv', 'Aktivieren oder deaktivieren Sie hier die Adresse.');
 
+$GLOBALS['TL_LANG']['tl_adressen']['publish_legend'] = 'Veröffentlichung';
+$GLOBALS['TL_LANG']['tl_adressen']['published'] = array('Veröffentlichen', 'Adresse veröffentlichen.');
+
 $GLOBALS['TL_LANG']['tl_adressen']['searchstring'] = array('Volltextsuche', 'Daten für Volltextsuche');
 
 
@@ -108,6 +111,14 @@ $GLOBALS['TL_LANG']['tl_adressen']['new'] = array('Neue Adresse', 'Neue Adresse 
 $GLOBALS['TL_LANG']['tl_adressen']['edit'] = array('Adresse bearbeiten', 'Adresse %s bearbeiten');
 $GLOBALS['TL_LANG']['tl_adressen']['copy'] = array('Adresse kopieren', 'Adresse %s kopieren');
 $GLOBALS['TL_LANG']['tl_adressen']['delete'] = array('Adresse löschen', 'Adresse %s löschen');
-$GLOBALS['TL_LANG']['tl_adressen']['toggle'] = array('Adresse aktivieren/deaktivieren', 'Adresse %s aktivieren/deaktivieren');
+$GLOBALS['TL_LANG']['tl_adressen']['toggle'] = array('Adresse veröffentlichen', 'Adresse %s veröffentlichen');
 $GLOBALS['TL_LANG']['tl_adressen']['show'] = array('Adressdetails anzeigen', 'Details der Adresse %s anzeigen');
+
+/**
+ * Filter
+ */
+
+$GLOBALS['TL_LANG']['tl_adressen']['filter'] = 'Spezialfilter';
+$GLOBALS['TL_LANG']['tl_adressen']['filter_extended'] = 'Spezialfilter';
+$GLOBALS['TL_LANG']['tl_adressen']['filter_emaildoubles'] = 'Doppelte E-Mail-Adressen';
 

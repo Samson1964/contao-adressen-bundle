@@ -206,7 +206,8 @@ class tl_content_adresse extends Backend
 			// Aktivstatus der Adresse ermitteln
 			$aktivstatus = $objAdresse->aktiv ? '' : $GLOBALS['TL_LANG']['tl_content']['adresse_nichtaktiv'];
 			// Adresse zuordnen
-			$array[$objAdresse->id] = $objAdresse->nachname ? $objAdresse->nachname.','.$objAdresse->vorname.$aktivstatus : '(Firma) '.$objAdresse->firma.$aktivstatus;
+			$temp = $objAdresse->nachname ? $objAdresse->nachname.','.$objAdresse->vorname.$aktivstatus : '(Firma) '.$objAdresse->firma.$aktivstatus;
+			$array[$objAdresse->id] = $temp.($objAdresse->ort ? ' ('.$objAdresse->ort.')' : '');
 
 		}
 		return $array;
@@ -217,15 +218,24 @@ class tl_content_adresse extends Backend
 	{
 		//print_r($dc);
 		$array = array();
-		$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen WHERE id = ?")
-		                             ->execute($dc->activeRecord->adresse_id);
+		$objAdresse = \Database::getInstance()->prepare("SELECT * FROM tl_adressen WHERE id = ?")
+		                                      ->execute($dc->activeRecord->adresse_id);
 
-		$objAdresse->email1 ? $array[1] = $objAdresse->email1 : '';
-		$objAdresse->email2 ? $array[2] = $objAdresse->email2 : '';
-		$objAdresse->email3 ? $array[3] = $objAdresse->email3 : '';
-		$objAdresse->email4 ? $array[4] = $objAdresse->email4 : '';
-		$objAdresse->email5 ? $array[5] = $objAdresse->email5 : '';
-		$objAdresse->email6 ? $array[6] = $objAdresse->email6 : '';
+		if($objAdresse->email1) $array[] = $objAdresse->email1;
+		if($objAdresse->email2) $array[] = $objAdresse->email2;
+		if($objAdresse->email3) $array[] = $objAdresse->email3;
+		if($objAdresse->email4) $array[] = $objAdresse->email4;
+		if($objAdresse->email5) $array[] = $objAdresse->email5;
+		if($objAdresse->email6) $array[] = $objAdresse->email6;
+
+		//$emails = unserialize($objAdresse->emails);
+		//if(is_array($emails) && count($emails) > 0)
+		//{
+		//	foreach($emails as $item)
+		//	{
+		//		$array[] = $item['mail'];
+		//	}
+		//}
 
 		return $array;
 

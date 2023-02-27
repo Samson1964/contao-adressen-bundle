@@ -18,6 +18,10 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 				'id' => 'primary'
 			)
 		),
+		'onload_callback'             => array
+		(
+			array('tl_adressen', 'applyAdvancedFilter'),
+		),
 		'onsubmit_callback' => array
 		(
 			array('tl_adressen', 'generateSearchstring')
@@ -32,7 +36,8 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'mode'                    => 2,
 			'fields'                  => array('nachname','vorname'),
 			'flag'                    => 1,
-			'panelLayout'             => 'filter;sort,search,limit',
+			'panelLayout'             => 'myfilter;filter;sort,search,limit',
+			'panel_callback'          => array('myfilter' => array('tl_adressen', 'generateAdvancedFilter')),
 		),
 		'label' => array
 		(
@@ -96,6 +101,20 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 				'icon'                => 'delete.gif',
 				'attributes'          => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"'
 			),
+			'toggle' => array
+			(
+				'label'                => &$GLOBALS['TL_LANG']['tl_adressen']['toggle'],
+				'attributes'           => 'onclick="Backend.getScrollOffset()"',
+				'haste_ajax_operation' => array
+				(
+					'field'            => 'aktiv',
+					'options'          => array
+					(
+						array('value' => '', 'icon' => 'invisible.svg'),
+						array('value' => '1', 'icon' => 'visible.svg'),
+					),
+				),
+			),
 			'show' => array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['show'],
@@ -109,7 +128,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	// Paletten
 	'palettes' => array
 	(
-		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{adressen_legend:hide},adressen;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefone_legend:hide},telefone;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{emails_legend:hide},emails;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,instagram,skype,whatsapp,threema,telegram,irc;{image_legend:hide},singleSRC;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv'
+		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{adressen_legend:hide},adressen;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefone_legend:hide},telefone;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{emails_legend:hide},emails;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,instagram,skype,whatsapp,threema,telegram,irc;{image_legend:hide},singleSRC;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv;{publish_legend},published'
 	),
 
 	// Felder
@@ -723,7 +742,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 				'tl_class'            => 'w50'
 			),
 			'sql'                     => "char(1) NOT NULL default ''"
-		), 
+		),
 		'singleSRC' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['singleSRC'],
@@ -737,7 +756,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 				'mandatory'           => false
 			),
 			'sql'                     => "binary(16) NULL"
-		), 
+		),
 		'text' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['text'],
@@ -832,6 +851,8 @@ if(version_compare(VERSION, '3.2', '>='))
  */
 class tl_adressen extends Backend
 {
+	var $adressensuche = array();
+
     /**
      * Add an image to each record
      * @param array
@@ -886,7 +907,7 @@ class tl_adressen extends Backend
 		if($varValue == 'http://') $varValue = '';
 		return $varValue;
 	}
-	
+
 	/**
 	 * Generiert automatisch ein Alias aus Vorname und Nachname
 	 * @param mixed
@@ -1155,6 +1176,163 @@ class tl_adressen extends Backend
 		);
 		return $array;
 
+	}
+
+	public function generateAdvancedFilter(\DataContainer $dc)
+	{
+
+		if (\Input::get('id') > 0)
+		{
+			return '';
+		}
+
+		$session = \Session::getInstance()->getData();
+
+		// Filters
+		$arrFilters = array
+		(
+			'adr_filter'   => array
+			(
+				'name'    => 'adr_filter',
+				'label'   => $GLOBALS['TL_LANG']['tl_adressen']['filter_extended'],
+				'options' => array
+				(
+					'1'  => $GLOBALS['TL_LANG']['tl_adressen']['filter_emaildoubles'],
+				)
+			),
+		);
+
+		$strBuffer = '
+<div class="tl_filter adr_filter tl_subpanel">
+<strong>' . $GLOBALS['TL_LANG']['tl_adressen']['filter'] . ':</strong> ' . "\n";
+
+		// Generate filters
+		foreach ($arrFilters as $arrFilter)
+		{
+			$strOptions = '
+<option value="' . $arrFilter['name'] . '">' . $arrFilter['label'] . '</option>
+<option value="' . $arrFilter['name'] . '">---</option>' . "\n";
+
+			// Generate options
+			foreach ($arrFilter['options'] as $k => $v)
+			{
+				$strOptions .= '  <option value="' . $k . '"' . (($session['filter']['tl_adressen_filter'][$arrFilter['name']] === (string) $k) ? ' selected' : '') . '>' . $v . '</option>' . "\n";
+			}
+
+			$strBuffer .= '<select name="' . $arrFilter['name'] . '" id="' . $arrFilter['name'] . '" class="tl_select' . (isset($session['filter']['tl_adressen_filter'][$arrFilter['name']]) ? ' active' : '') . '">
+' . $strOptions . '
+</select>' . "\n";
+		}
+
+		return $strBuffer . '</div>';
+
+	}
+
+	public function applyAdvancedFilter()
+	{
+
+		$session = $this->Session->getData();
+
+		// Filterwerte in der Sitzung speichern
+		foreach($_POST as $k => $v)
+		{
+			if(substr($k, 0, 4) != 'adr_')
+			{
+				continue;
+			}
+
+			// Filter zurücksetzen
+			if($k == \Input::post($k))
+			{
+				unset($session['filter']['tl_adressen_filter'][$k]);
+			} 
+			// Filter zuweisen
+			else
+			{
+				$session['filter']['tl_adressen_filter'][$k] = \Input::post($k);
+			}
+		}
+
+		$this->Session->setData($session);
+
+		if(\Input::get('id') > 0 || !isset($session['filter']['tl_adressen_filter']))
+		{
+			return;
+		}
+
+		$arrPlayers = null;
+
+		switch($session['filter']['tl_adressen_filter']['adr_filter'])
+		{
+			case '1': // Adressen mit doppelten E-Mail-Adressen anzeigen
+				$objAdressen = \Database::getInstance()->prepare("SELECT * FROM tl_adressen")
+				                                       ->execute();
+				if($objAdressen->numRows)
+				{
+					// Alle E-Mail-Adressen in Array mit Verweis auf Datensatz-ID speichern
+					while($objAdressen->next())
+					{
+						self::addAdresse($objAdressen->email1, $objAdressen->id);
+						self::addAdresse($objAdressen->email2, $objAdressen->id);
+						self::addAdresse($objAdressen->email3, $objAdressen->id);
+						self::addAdresse($objAdressen->email4, $objAdressen->id);
+						self::addAdresse($objAdressen->email5, $objAdressen->id);
+						self::addAdresse($objAdressen->email6, $objAdressen->id);
+						$emails = unserialize($objAdressen->emails);
+						if(is_array($emails) && count($emails) > 0)
+						{
+							foreach($emails as $item)
+							{
+								self::addAdresse($item['mail'], $objAdressen->id);
+							}
+						}
+					}
+				}
+				$arrAdressen = self::getAdressen();
+				//print_r($arrAdressen);
+				break;
+
+			default:
+		}
+
+		if (is_array($arrAdressen) && empty($arrAdressen))
+		{
+			$arrAdressen = array(0);
+		}
+
+		$GLOBALS['TL_DCA']['tl_adressen']['list']['sorting']['root'] = $arrAdressen;
+
+	}
+
+	public function addAdresse($email, $id)
+	{
+		if($email)
+		{
+			$this->adressensuche[$email][] = $id;
+		}
+	}
+
+	public function getAdressen()
+	{
+		$idArray = array();
+		//echo '<pre>';
+		//print_r($this->adressensuche);
+		//echo '</pre>';
+		$zaehler = 0;
+		foreach($this->adressensuche as $email => $arr)
+		{
+			if(count($arr) > 1)
+			{
+				$zaehler++;
+				foreach($arr as $id)
+				{
+					$idArray[] = $id;
+				}
+			}
+		}
+		//echo "Zähler: $zaehler";
+		//print_r($idArray);
+		return array_unique($idArray);
 	}
 
 }
