@@ -83,32 +83,52 @@ class Adresse extends \ContentElement
 				}
 
 				// Erlaubte E-Mail-Adressen feststellen
-				$mailErlaubtArr = array(1 => true, 2 => true, 3 => true, 4 => true, 5 => true, 6 => true);
+				$mailErlaubtArr = array();
 				if($this->adresse_selectmails)
 				{
-					$erlaubtArr = unserialize($this->adresse_mails);
-					if(is_array($erlaubtArr))
-					{
-						for($x=1; $x<=6; $x++)
-						{
-							if(in_array($x, $erlaubtArr) == false) 
-							{
-								$mailErlaubtArr[$x] = false;
-							}
-						}
-					}
+					$mailErlaubtArr = unserialize($this->adresse_mails);
+					if(!is_array($mailErlaubtArr)) $mailErlaubtArr = array(); // Neu initialisieren, wenn Array kaputt ist (wegen varchar(64))
 				}
-					
 				// Email-Array erstellen
 				if($objAdresse->email_view)
 				{
 					$email = array();
-					if($objAdresse->email1 && $mailErlaubtArr[1]) $email[] = $objAdresse->email1;
-					if($objAdresse->email2 && $mailErlaubtArr[2]) $email[] = $objAdresse->email2;
-					if($objAdresse->email3 && $mailErlaubtArr[3]) $email[] = $objAdresse->email3;
-					if($objAdresse->email4 && $mailErlaubtArr[4]) $email[] = $objAdresse->email4;
-					if($objAdresse->email5 && $mailErlaubtArr[5]) $email[] = $objAdresse->email5;
-					if($objAdresse->email6 && $mailErlaubtArr[6]) $email[] = $objAdresse->email6;
+					if($objAdresse->email1)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email1, $mailErlaubtArr)) $email[] = $objAdresse->email1;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email1;
+					}
+					if($objAdresse->email2)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email2, $mailErlaubtArr)) $email[] = $objAdresse->email2;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email2;
+					}
+					if($objAdresse->email3)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email3, $mailErlaubtArr)) $email[] = $objAdresse->email3;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email3;
+					}
+					if($objAdresse->email4)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email4, $mailErlaubtArr)) $email[] = $objAdresse->email4;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email4;
+					}
+					if($objAdresse->email5)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email5, $mailErlaubtArr)) $email[] = $objAdresse->email5;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email5;
+					}
+					if($objAdresse->email6)
+					{
+						if($this->adresse_selectmails && in_array($objAdresse->email6, $mailErlaubtArr)) $email[] = $objAdresse->email6;
+						elseif(!$this->adresse_selectmails) $email[] = $objAdresse->email6;
+					}
+					//if($objAdresse->email1 && ($this->adresse_selectmails && in_array($objAdresse->email1, $mailErlaubtArr)) ) $email[] = $objAdresse->email1;
+					//if($objAdresse->email2 && $mailErlaubtArr[2]) $email[] = $objAdresse->email2;
+					//if($objAdresse->email3 && $mailErlaubtArr[3]) $email[] = $objAdresse->email3;
+					//if($objAdresse->email4 && $mailErlaubtArr[4]) $email[] = $objAdresse->email4;
+					//if($objAdresse->email5 && $mailErlaubtArr[5]) $email[] = $objAdresse->email5;
+					//if($objAdresse->email6 && $mailErlaubtArr[6]) $email[] = $objAdresse->email6;
 				}
 
 				// Bild extrahieren

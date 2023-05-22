@@ -131,7 +131,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['adresse_mails'] = array
 		'tl_class'         => 'w50', 
 		'multiple'         => true
 	),
-	'sql'                  => "varchar(64) NOT NULL default ''"
+	'sql'                  => "blob NULL"
 );
 
 // Feld singleSRC dynamisch ändern bei Adressen

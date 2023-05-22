@@ -1,5 +1,10 @@
 # Adressen Changelog
 
+## Version 2.2.1 (2023-05-22)
+
+* Change: tl_content.adresse_mails -> blob statt varchar(64) wegen Platzproblemen bei langen Adressen
+* Fix: Inhaltselement -> nur bestimmte E-Mail-Adressen anzeigen (keine Anzeige)
+
 ## Version 2.2.0 (2023-02-27)
 
 * Add: Abhängigkeit codefog/contao-haste
