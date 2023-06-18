@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 2.3.0 (2023-06-18)
+
+* Add: PHP 8 in composer.json als erlaubt eingetragen
+
 ## Version 2.2.1 (2023-05-22)
 
 * Change: tl_content.adresse_mails -> blob statt varchar(64) wegen Platzproblemen bei langen Adressen
