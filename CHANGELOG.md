@@ -1,5 +1,11 @@
 # Adressen Changelog
 
+## Version 2.3.1 (2025-07-01)
+
+* Fix: Warning: Undefined array key "adressen_ImageSize" in src/ContentElements/Adresse.php (line 160) 
+* Fix: Warning: Attempt to read property "path" on null in /src/ContentElements/Adresse.php (line 169) 
+* Fix: Warning: Attempt to read property "path" on null in src/Resources/contao/dca/tl_content.php (line 261) 
+
 ## Version 2.3.0 (2023-06-18)
 
 * Add: PHP 8 in composer.json als erlaubt eingetragen

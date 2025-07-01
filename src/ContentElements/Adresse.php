@@ -157,12 +157,20 @@ class Adresse extends \ContentElement
 				else
 				{
 					// Format aus System -> Einstellungen benutzen
-					$imageSize = unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize']);
+					if(isset($GLOBALS['TL_CONFIG']['adressen_ImageSize'])) $imageSize = unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize']);
+					else 
+					{
+						\Message::addError('adressen_ImageSize ist nicht definiert.');
+						\Controller::redirect('contao/main.php?act=error');
+					}
 				}
 
 				$objBild = new \stdClass();
-				\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
-
+				if(isset($objFile->path))
+				{
+					\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
+				}
+				
 				// Daten aus tl_adressen in das Template schreiben
 				$this->Template->id            = $objAdresse->id;
 				$this->Template->nachname      = $objAdresse->nachname;
@@ -191,14 +199,17 @@ class Adresse extends \ContentElement
 				$this->Template->info          = $objAdresse->info;
 				$this->Template->aktiv         = $objAdresse->aktiv;
 
-				// Foto
-				$this->Template->viewFoto      = $this->adresse_addImage;
-				$this->Template->image         = $objBild->singleSRC;
-				$this->Template->imageSize     = $objBild->imgSize;
-				$this->Template->imageTitle    = $objBild->imageTitle;
-				$this->Template->imageAlt      = $objBild->alt;
-				$this->Template->imageCaption  = $objBild->caption;
-				$this->Template->thumbnail     = $objBild->src;
+				if(isset($objBild->singleSRC))
+				{
+					// Foto
+					$this->Template->viewFoto      = $this->adresse_addImage;
+					$this->Template->image         = $objBild->singleSRC;
+					$this->Template->imageSize     = $objBild->imgSize;
+					$this->Template->imageTitle    = $objBild->imageTitle;
+					$this->Template->imageAlt      = $objBild->alt;
+					$this->Template->imageCaption  = $objBild->caption;
+					$this->Template->thumbnail     = $objBild->src;
+				}
 
 				// Daten aus tl_content in das Template schreiben
 				$this->Template->funktion      = $this->adresse_funktion;
