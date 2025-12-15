@@ -1,5 +1,9 @@
 # Adressen Changelog
 
+## Version 3.0.1 (2025-12-15)
+
+* Fix: Aufruf Klasse Config in \Contao\Config geändert
+
 ## Version 3.0.0 (2025-12-15)
 
 * Change: Abhängigkeit auf Contao 5 und PHP 8 gesetzt

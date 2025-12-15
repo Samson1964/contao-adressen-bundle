@@ -168,7 +168,7 @@ class Adresse extends \Contao\ContentElement
 				$objBild = new \stdClass();
 				if(isset($objFile->path))
 				{
-					\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
+					\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Contao\Config::get('maxImageWidth'), null, $objFile);
 				}
 				
 				// Daten aus tl_adressen in das Template schreiben

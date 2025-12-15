@@ -751,7 +751,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array
 			(
 				'filesOnly'           => true,
-				'extensions'          => Config::get('validImageTypes'),
+				'extensions'          => \Contao\Config::get('validImageTypes'),
 				'fieldType'           => 'radio',
 				'mandatory'           => false
 			),

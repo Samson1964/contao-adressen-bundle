@@ -1,7 +1,7 @@
 {
     "name": "schachbulle/contao-adressen-bundle",
     "type": "contao-bundle",
-    "description": "Adressen für Contao 4/5",
+    "description": "Adressen für Contao 5",
     "license": "LGPL-3.0-or-later",
     "authors": [
         {
