@@ -141,7 +141,7 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['load_callback'][] =  ar
  * Klasse tl_content_adresse
  *****************************************/
  
-class tl_content_adresse extends Backend
+class tl_content_adresse extends \Contao\Backend
 {
 
 	/**
@@ -161,7 +161,7 @@ class tl_content_adresse extends Backend
 	 *
 	 * @return mixed
 	 */
-	public function setSingleSrcFlags($varValue, DataContainer $dc)
+	public function setSingleSrcFlags($varValue, \Contao\DataContainer $dc)
 	{
 		if($dc->activeRecord)
 		{
@@ -170,7 +170,7 @@ class tl_content_adresse extends Backend
 			{
 				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['mandatory'] = false;
 				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['tl_class'] = 'w50';
-				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['extensions'] = Config::get('validImageTypes');
+				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['eval']['extensions'] = \Contao\Config::get('validImageTypes');
 				$GLOBALS['TL_DCA']['tl_content']['fields']['singleSRC']['label'] = &$GLOBALS['TL_LANG']['tl_content']['adresse_singleSRC'];
 			}
 		}
@@ -183,7 +183,7 @@ class tl_content_adresse extends Backend
 	 * @param \DataContainer
 	 * @return string
 	 */
-	public function editAdresse(DataContainer $dc)
+	public function editAdresse(\Contao\DataContainer $dc)
 	{
 
 		if($dc->value < 1)
@@ -197,7 +197,7 @@ class tl_content_adresse extends Backend
 		
 	} 
 	
-	public function getAdressenListe(DataContainer $dc)
+	public function getAdressenListe(\Contao\DataContainer $dc)
 	{
 		$array = array();
 		$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen ORDER BY nachname ASC, vorname ASC")->execute();
@@ -214,11 +214,11 @@ class tl_content_adresse extends Backend
 
 	}
 
-	public function getMails(DataContainer $dc)
+	public function getMails(\Contao\DataContainer $dc)
 	{
 		//print_r($dc);
 		$array = array();
-		$objAdresse = \Database::getInstance()->prepare("SELECT * FROM tl_adressen WHERE id = ?")
+		$objAdresse = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_adressen WHERE id = ?")
 		                                      ->execute($dc->activeRecord->adresse_id);
 
 		if($objAdresse->email1) $array[] = $objAdresse->email1;
@@ -241,7 +241,7 @@ class tl_content_adresse extends Backend
 
 	}
 
-	public function getThumbnail(DataContainer $dc)
+	public function getThumbnail(\Contao\DataContainer $dc)
 	{
 
 		if($dc->activeRecord->adresse_id)
@@ -251,18 +251,18 @@ class tl_content_adresse extends Backend
 			// Bild extrahieren
 			if($objAdresse->singleSRC)
 			{
-				$objFile = \FilesModel::findByPk($objAdresse->singleSRC);
+				$objFile = \Contao\FilesModel::findByPk($objAdresse->singleSRC);
 			}
 			else
 			{
-				$objFile = \FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+				$objFile = \Contao\FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
 			}
 
 			$objBild = new \stdClass();
 			$strBild = '';
 			if(isset($objFile->path))
 			{
-				\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
+				\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
 				$strBild = '<img src="'.$objBild->src.'" alt="'.$objBild->alt.'" title="'.$objBild->imageTitle.'" '.$objBild->imgSize.'>';
 			}
 

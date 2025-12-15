@@ -5,7 +5,7 @@ namespace Schachbulle\ContaoAdressenBundle\Classes;
 /*
  */
 
-class Wertungsreferenten extends \Module
+class Wertungsreferenten extends \Contao\Module
 {
 
 	var $strTemplate = 'adresse_referenten';
@@ -19,7 +19,7 @@ class Wertungsreferenten extends \Module
 	{
 		if (TL_MODE == 'BE')
 		{
-			$objTemplate = new \BackendTemplate('be_wildcard');
+			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
 			$objTemplate->wildcard = '### ADRESSEN WERTUNGSREFERENTEN ###';
 			//$objTemplate->title = $this->name;
@@ -66,7 +66,7 @@ class Wertungsreferenten extends \Module
 					foreach($bezirke as $bezirk)
 					{
 						// Adresse dem Bezirk zuweisen
-						$this->Adresstemplate = new \FrontendTemplate($this->subTemplate);
+						$this->Adresstemplate = new \Contao\FrontendTemplate($this->subTemplate);
 						$temp = '<div class="ce_adressen">';
 						$temp .= '<h3>'.$bezirksname[$bezirk].'</h3>';
 						$temp .= $this->FormatiereAdresse($objAdressen, $this->Adresstemplate);
@@ -168,7 +168,7 @@ class Wertungsreferenten extends \Module
 				// Bild aus Inhaltselement verwenden!
 				if($this->singleSRC)
 				{
-					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \FilesModel::findByUuid($this->singleSRC) : $objModel = \FilesModel::findByPk($this->singleSRC);
+					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \Contao\FilesModel::findByUuid($this->singleSRC) : $objModel = \FilesModel::findByPk($this->singleSRC);
 					if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
 					{
 						$bildurl = $objModel->path;
@@ -190,7 +190,7 @@ class Wertungsreferenten extends \Module
 				// Bild aus tl_adressen verwenden!
 				if($data->singleSRC)
 				{
-					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \FilesModel::findByUuid($data->singleSRC) : $objModel = \FilesModel::findByPk($data->singleSRC);
+					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \Contao\FilesModel::findByUuid($data->singleSRC) : $objModel = \FilesModel::findByPk($data->singleSRC);
 					if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
 					{
 						$bildurl = $objModel->path;

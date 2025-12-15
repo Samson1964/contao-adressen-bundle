@@ -5,7 +5,7 @@ namespace Schachbulle\ContaoAdressenBundle\Modules;
 /*
  */
 
-class Wertungsreferenten extends \Module
+class Wertungsreferenten extends \Contao\Module
 {
 
 	var $strTemplate = 'mod_adressen_referenten';
@@ -18,7 +18,7 @@ class Wertungsreferenten extends \Module
 	{
 		if (TL_MODE == 'BE')
 		{
-			$objTemplate = new \BackendTemplate('be_wildcard');
+			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
 			$objTemplate->wildcard = '### ADRESSEN WERTUNGSREFERENTEN ###';
 			//$objTemplate->title = $this->name;

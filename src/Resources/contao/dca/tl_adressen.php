@@ -840,16 +840,10 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	)
 );
 
-// Bildfeld anpassen, wenn Contao >= 3.2 aktiv ist
-if(version_compare(VERSION, '3.2', '>='))
-{
-	$GLOBALS['TL_DCA']['tl_adressen']['fields']['singleSRC']['sql'] = "binary(16) NULL";
-}
-
 /**
  * Class tl_member_aktivicon
  */
-class tl_adressen extends Backend
+class tl_adressen extends \Contao\Backend
 {
 	var $adressensuche = array();
 
@@ -861,7 +855,7 @@ class tl_adressen extends Backend
      * @param array
      * @return string
      */
-	public function addIcon($row, $label, DataContainer $dc, $args)
+	public function addIcon($row, $label, \Contao\DataContainer $dc, $args)
 	{
 		// Anzahl Einbindungen feststellen und Singular/Plural zuweisen
 		$seiten = count(explode("\n",$row['links']))-1;
@@ -893,7 +887,7 @@ class tl_adressen extends Backend
 		}
 
 		// Spalte 0 (aktiv) in Ausgabe überschreiben
-		$args[0] = '<span href="" title="'.$title.'">'.Image::getHtml($icon,'').'</span>';
+		$args[0] = '<span href="" title="'.$title.'">'.\Contao\Image::getHtml($icon,'').'</span>';
 
 		// Modifizierte Zeile zurückgeben
 		return $args;
@@ -901,7 +895,7 @@ class tl_adressen extends Backend
 	}
 
 
-	public function saveHomepage($varValue, DataContainer $dc)
+	public function saveHomepage($varValue, \Contao\DataContainer $dc)
 	{
 		// Ersetzt http:// wenn nichts dahinter steht
 		if($varValue == 'http://') $varValue = '';
@@ -915,7 +909,7 @@ class tl_adressen extends Backend
 	 * @return string
 	 * @throws \Exception
 	 */
-	public function generateSearchstring(DataContainer $dc)
+	public function generateSearchstring(\Contao\DataContainer $dc)
 	{
 		$temp = $dc->activeRecord->nachname;
 		$temp .= '-'.$dc->activeRecord->vorname;
@@ -939,7 +933,7 @@ class tl_adressen extends Backend
 		$temp .= '-'.$dc->activeRecord->info;
 
 		$temp = \Schachbulle\ContaoAdressenBundle\Classes\Funktionen::generateAlias($temp);
-		\Database::getInstance()->prepare("UPDATE tl_adressen SET searchstring = ? WHERE id = ?")
+		\Contao\Database::getInstance()->prepare("UPDATE tl_adressen SET searchstring = ? WHERE id = ?")
 		                        ->execute($temp, $dc->id);
 	}
 
@@ -948,12 +942,12 @@ class tl_adressen extends Backend
 	 * @param \DataContainer
 	 * @return string
 	 */
-	public function pagePicker(DataContainer $dc)
+	public function pagePicker(\Contao\DataContainer $dc)
 	{
 		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
 	}
 
-	public function getReferenten(DataContainer $dc)
+	public function getReferenten(\Contao\DataContainer $dc)
 	{
 		// Referate zuordnen
 		$array = array
@@ -1178,15 +1172,15 @@ class tl_adressen extends Backend
 
 	}
 
-	public function generateAdvancedFilter(\DataContainer $dc)
+	public function generateAdvancedFilter(\Contao\DataContainer $dc)
 	{
 
-		if (\Input::get('id') > 0)
+		if (\Contao\Input::get('id') > 0)
 		{
 			return '';
 		}
 
-		$session = \Session::getInstance()->getData();
+		$session = \Contao\Session::getInstance()->getData();
 
 		// Filters
 		$arrFilters = array
@@ -1242,20 +1236,20 @@ class tl_adressen extends Backend
 			}
 
 			// Filter zurücksetzen
-			if($k == \Input::post($k))
+			if($k == \Contao\Input::post($k))
 			{
 				unset($session['filter']['tl_adressen_filter'][$k]);
 			} 
 			// Filter zuweisen
 			else
 			{
-				$session['filter']['tl_adressen_filter'][$k] = \Input::post($k);
+				$session['filter']['tl_adressen_filter'][$k] = \Contao\Input::post($k);
 			}
 		}
 
 		$this->Session->setData($session);
 
-		if(\Input::get('id') > 0 || !isset($session['filter']['tl_adressen_filter']))
+		if(\Contao\Input::get('id') > 0 || !isset($session['filter']['tl_adressen_filter']))
 		{
 			return;
 		}
@@ -1265,7 +1259,7 @@ class tl_adressen extends Backend
 		switch($session['filter']['tl_adressen_filter']['adr_filter'])
 		{
 			case '1': // Adressen mit doppelten E-Mail-Adressen anzeigen
-				$objAdressen = \Database::getInstance()->prepare("SELECT * FROM tl_adressen")
+				$objAdressen = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_adressen")
 				                                       ->execute();
 				if($objAdressen->numRows)
 				{

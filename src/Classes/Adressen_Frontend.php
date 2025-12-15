@@ -7,7 +7,7 @@ namespace Schachbulle\ContaoAdressenBundle\Classes;
  * durch die entsprechende Adresse aus tl_adressen
  */
 
-class Adressen_Frontend extends \Frontend
+class Adressen_Frontend extends \Contao\Frontend
 {
 
 	/**
@@ -29,7 +29,7 @@ class Adressen_Frontend extends \Frontend
 			$fotohoehe = 0;
 
 			// Template-Objekt erzeugen
-			$this->Template = new \FrontendTemplate($this->strTemplate);
+			$this->Template = new \Contao\FrontendTemplate($this->strTemplate);
 
 			// Template-Variablen initialisieren
 			$this->Template->funktion     = "";
@@ -109,7 +109,7 @@ class Adressen_Frontend extends \Frontend
 					{
 						if(is_numeric($objAdresse->bild))
 						{
-							$objModel = \FilesModel::findByPk($objAdresse->bild);
+							$objModel = \Contao\FilesModel::findByPk($objAdresse->bild);
 							if ($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
 							{
 								if($fotobreite && $fotohoehe)

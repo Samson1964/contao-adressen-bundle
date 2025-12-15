@@ -27,7 +27,7 @@ namespace Schachbulle\ContaoAdressenBundle\Classes;
  * @package    Banner
  */
 
-class Funktionen extends \Frontend
+class Funktionen extends \Contao\Frontend
 {
 	/**
 	 * Current object instance
@@ -46,7 +46,7 @@ class Funktionen extends \Frontend
 		if(FE_USER_LOGGED_IN)
 		{
 			// Frontenduser eingeloggt
-			$this->user = \FrontendUser::getInstance();
+			$this->user = \Contao\FrontendUser::getInstance();
 		}
 		parent::__construct();
 	}
@@ -74,7 +74,7 @@ class Funktionen extends \Frontend
 	 */
 	public static function generateAlias($string)
 	{
-		$string = \StringUtil::generateAlias($string);
+		$string = \Contao\StringUtil::generateAlias($string);
 		$search  = array('Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß');
 		$replace = array('ae', 'oe', 'ue', 'ae', 'oe', 'ue', 'ss');
 		return str_replace($search, $replace, $string);
@@ -92,7 +92,7 @@ class Funktionen extends \Frontend
 		$arrCats = array();
 		$sql = $inaktiv ? '' : 'WHERE active = 1 ';
 		
-		$objResult = \Database::getInstance()->prepare('SELECT * FROM tl_adressen_categories '.$sql.'ORDER BY category')->execute();
+		$objResult = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen_categories '.$sql.'ORDER BY category')->execute();
 
 		while($objResult->next())
 		{

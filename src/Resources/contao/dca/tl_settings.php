@@ -1,4 +1,4 @@
-<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
+<?php
 
 /**
  * Contao Open Source CMS
@@ -41,7 +41,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_ImageSize'] = array
 	'eval'                    => array('rgxp'=>'natural', 'includeBlankOption'=>true, 'nospace'=>true, 'helpwizard'=>true, 'tl_class'=>'w50'),
 	'options_callback' => static function ()
 	{
-		return System::getContainer()->get('contao.image.image_sizes')->getOptionsForUser(BackendUser::getInstance());
+		return \Contao\System::getContainer()->get('contao.image.image_sizes')->getOptionsForUser(\Contao\BackendUser::getInstance());
 	},
 	'sql'                     => "varchar(255) NOT NULL default ''"
 );

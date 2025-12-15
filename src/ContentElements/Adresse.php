@@ -2,7 +2,7 @@
 
 namespace Schachbulle\ContaoAdressenBundle\ContentElements;
 
-class Adresse extends \ContentElement
+class Adresse extends \Contao\ContentElement
 {
 
 	/**
@@ -135,17 +135,17 @@ class Adresse extends \ContentElement
 				if($this->singleSRC)
 				{
 					// Ersatzfoto im Inhaltselement definiert
-					$objFile = \FilesModel::findByUuid($this->singleSRC);
+					$objFile = \Contao\FilesModel::findByUuid($this->singleSRC);
 				}
 				elseif($objAdresse->singleSRC)
 				{
 					// Foto aus tl_adressen
-					$objFile = \FilesModel::findByPk($objAdresse->singleSRC);
+					$objFile = \Contao\FilesModel::findByPk($objAdresse->singleSRC);
 				}
 				else
 				{
 					// Standardfoto
-					$objFile = \FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+					$objFile = \Contao\FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
 				}
 
 				// Bildformat auswerten
@@ -160,15 +160,15 @@ class Adresse extends \ContentElement
 					if(isset($GLOBALS['TL_CONFIG']['adressen_ImageSize'])) $imageSize = unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize']);
 					else 
 					{
-						\Message::addError('adressen_ImageSize ist nicht definiert.');
-						\Controller::redirect('contao/main.php?act=error');
+						\Contao\Message::addError('adressen_ImageSize ist nicht definiert.');
+						\Contao\Controller::redirect('contao/main.php?act=error');
 					}
 				}
 
 				$objBild = new \stdClass();
 				if(isset($objFile->path))
 				{
-					\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
+					\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Config::get('maxImageWidth'), null, $objFile);
 				}
 				
 				// Daten aus tl_adressen in das Template schreiben

@@ -7,10 +7,10 @@ namespace Schachbulle\ContaoAdressenBundle\Classes;
  * durch die entsprechende Adresse aus tl_adressen
  */
 
-class Adressen_Backend extends \Backend
+class Adressen_Backend extends \Contao\Backend
 {
 
-	public function exportAdressen(\DataContainer $dc)
+	public function exportAdressen(\Contao\DataContainer $dc)
 	{
 		if($this->Input->get('key') != 'export')
 		{
@@ -63,9 +63,9 @@ class Adressen_Backend extends \Backend
 		
 	}
 
-	public function importAdressen(\DataContainer $dc)
+	public function importAdressen(\Contao\DataContainer $dc)
 	{
-		if(\Input::get('key') != 'import')
+		if(\Contao\Input::get('key') != 'import')
 		{
 			// Beenden, wenn der Parameter nicht übereinstimmt
 			return '';
@@ -84,13 +84,13 @@ class Adressen_Backend extends \Backend
 		$objUploader = new $class();
 
 		// Formular wurde abgeschickt, CSS-Datei importieren
-		if (\Input::post('FORM_SUBMIT') == 'tl_table_import')
+		if (\Contao\Input::post('FORM_SUBMIT') == 'tl_table_import')
 		{
 			$arrUploaded = $objUploader->uploadTo('system/tmp');
 
 			if(empty($arrUploaded))
 			{
-				\Message::addError($GLOBALS['TL_LANG']['ERR']['all_fields']);
+				\Contao\Message::addError($GLOBALS['TL_LANG']['ERR']['all_fields']);
 				$this->reload();
 			}
 
@@ -103,12 +103,12 @@ class Adressen_Backend extends \Backend
 
 				if ($objFile->extension != 'csv')
 				{
-					\Message::addError(sprintf($GLOBALS['TL_LANG']['ERR']['filetype'], $objFile->extension));
+					\Contao\Message::addError(sprintf($GLOBALS['TL_LANG']['ERR']['filetype'], $objFile->extension));
 					continue;
 				}
 
 				// Get separator
-				switch (\Input::post('separator'))
+				switch (\Contao\Input::post('separator'))
 				{
 					case 'semicolon':
 						$strSeparator = ';';
@@ -159,7 +159,7 @@ class Adressen_Backend extends \Backend
 				// Daten in MySQL-Tabelle schreiben
 				if($doppelt)
 				{
-					\Message::addError($objFile->name." wurde nicht importiert. Doppelte ID: ".$doppelt);
+					\Contao\Message::addError($objFile->name." wurde nicht importiert. Doppelte ID: ".$doppelt);
 				}
 				else
 				{
@@ -190,17 +190,17 @@ class Adressen_Backend extends \Backend
 
 			// Cookie setzen und zurückkehren zur Adressenliste (key=import aus URL entfernen)
 			\System::setCookie('BE_PAGE_OFFSET', 0, 0);
-			$this->redirect(str_replace('&key=import', '', \Environment::get('request')));
+			$this->redirect(str_replace('&key=import', '', \Contao\Environment::get('request')));
 		}
 
 		// Return form
 		return '
 <div id="tl_buttons">
-<a href="'.ampersand(str_replace('&key=import', '', \Environment::get('request'))).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle']).'" accesskey="b">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+<a href="'.ampersand(str_replace('&key=import', '', \Contao\Environment::get('request'))).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle']).'" accesskey="b">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
 </div>
 
 <h2 class="sub_headline">'.$GLOBALS['TL_LANG']['MSC']['tw_import'][1].'</h2>
-'.\Message::generate().'
+'.\Contao\Message::generate().'
 <form action="'.ampersand(\Environment::get('request'), true).'" id="tl_table_import" class="tl_form" method="post" enctype="multipart/form-data">
 <div class="tl_formbody_edit">
 <input type="hidden" name="FORM_SUBMIT" value="tl_table_import">

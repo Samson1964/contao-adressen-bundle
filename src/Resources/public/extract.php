@@ -14,7 +14,7 @@ require($_SERVER['DOCUMENT_ROOT'].'../../system/initialize.php');
 /** 
  * extends \System ?
  */ 
-class ExtractJob extends \PageRegular 
+class ExtractJob extends \Contao\PageRegular 
 { 
 
 	var $aktzeit;
@@ -37,7 +37,7 @@ class ExtractJob extends \PageRegular
 
 		// In Inhaltselementen vom Typ "text" im Feld "text" nach adresse-Tags suchen, 
 		// dabei nur veröffentlichte Elemente berücksichtigen 
-		$objContent = \Database::getInstance()->prepare("SELECT * FROM tl_content WHERE text LIKE '%{{adresse::%' AND type = 'text' AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND invisible = ''") 
+		$objContent = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_content WHERE text LIKE '%{{adresse::%' AND type = 'text' AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND invisible = ''") 
 				  							  ->execute($this->aktzeit, $this->aktzeit); 
 		$inserttags = 0; // Tags-Zähler initialisieren
 
@@ -55,14 +55,14 @@ class ExtractJob extends \PageRegular
 				$value = explode("::",$match);
 				$adrnr = $value[0];
 				// Informationen zum Artikel des Inhaltselements suchen
-				$objArtikel = \Database::getInstance()->prepare("SELECT * FROM " . $objContent->ptable . " WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
+				$objArtikel = \Contao\Database::getInstance()->prepare("SELECT * FROM " . $objContent->ptable . " WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
 				  							  		  ->execute($objContent->pid, $this->aktzeit, $this->aktzeit); 
 				// Informationen zur Seite des Artikels suchen
-				$objSeite = \Database::getInstance()->prepare("SELECT * FROM tl_page WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
+				$objSeite = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_page WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
 				  							  		->execute($objArtikel->pid, $this->aktzeit, $this->aktzeit);
 				if($objArtikel->id && $objSeite->id)
 				{ 
-					$objPage = \Controller::getPageDetails($objSeite->id);
+					$objPage = \Contao\Controller::getPageDetails($objSeite->id);
 					$adresse[$value[0]][] = array
 					(
 						'page_alias'      => $objSeite->alias, 
@@ -82,7 +82,7 @@ class ExtractJob extends \PageRegular
 
 		// Inhaltselemente vom Typ "adressen" suchen, 
 		// dabei nur veröffentlichte Elemente berücksichtigen 
-		$objAdressen = \Database::getInstance()->prepare("SELECT * FROM tl_content WHERE type = 'adressen' AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND invisible = ''") 
+		$objAdressen = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_content WHERE type = 'adressen' AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND invisible = ''") 
 				  							  ->execute($this->aktzeit, $this->aktzeit); 
 		$insertelements = 0; // Objekte-Zähler initialisieren
 
@@ -91,10 +91,10 @@ class ExtractJob extends \PageRegular
 			if ($objAdressen->ptable == 'tl_article' || $objAdressen->ptable == 'tl_news')
 			{
 				// Informationen zum Artikel des Inhaltselements suchen
-				$objArtikel = \Database::getInstance()->prepare("SELECT * FROM " . $objAdressen->ptable . " WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
+				$objArtikel = \Contao\Database::getInstance()->prepare("SELECT * FROM " . $objAdressen->ptable . " WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
 				                                      ->execute($objAdressen->pid, $this->aktzeit, $this->aktzeit); 
 				// Informationen zur Seite des Artikels suchen
-				$objSeite = \Database::getInstance()->prepare("SELECT * FROM tl_page WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
+				$objSeite = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_page WHERE id = ? AND (start = '' OR start < ?) AND (stop = '' OR stop > ?) AND published = 1") 
 				                                    ->execute($objArtikel->pid, $this->aktzeit, $this->aktzeit); 
 				if($objArtikel->id && $objSeite->id)
 				{ 
@@ -103,14 +103,14 @@ class ExtractJob extends \PageRegular
 					if($objAdressen->adresse_viewfoto && $objAdressen->addImage)
 					{
 						//$objModel = \FilesModel::findByPk($objAdressen->singleSRC);
-						$objModel = \FilesModel::findByUuid($objAdressen->singleSRC);
+						$objModel = \Contao\FilesModel::findByUuid($objAdressen->singleSRC);
 						if ($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
 						{
 							$altfoto = $objModel->path;
 						}
 					}
 					// Domain der Seite ermitteln und adresse-Array schreiben
-					$objPage = \Controller::getPageDetails($objSeite->id);
+					$objPage = \Contao\Controller::getPageDetails($objSeite->id);
 					$adresse[$objAdressen->adresse_id][] = array
 					(
 						'page_alias'      => $objSeite->alias, 
@@ -129,7 +129,7 @@ class ExtractJob extends \PageRegular
 		} 
 
 		// Spalte links in tl_adressen leeren
-		\Database::getInstance()->prepare('UPDATE tl_adressen SET links = NULL') 
+		\Contao\Database::getInstance()->prepare('UPDATE tl_adressen SET links = NULL') 
 								->execute(); 
 		
 		// Treffer in Spalte links von tl_adressen eintragen
@@ -141,7 +141,7 @@ class ExtractJob extends \PageRegular
 				$ausgabe .= 'http://' . $satz['domain'] . '/' . $satz['page_alias'].".html\n";
 			}
 			// tl_adressen aktualisieren
-			\Database::getInstance()->prepare('UPDATE tl_adressen SET links = ? WHERE id = ?') 
+			\Contao\Database::getInstance()->prepare('UPDATE tl_adressen SET links = ? WHERE id = ?') 
 									->execute($ausgabe, $key); 
 			
 		}
@@ -160,5 +160,3 @@ class ExtractJob extends \PageRegular
  */ 
 $objExtract = new ExtractJob(); 
 $objExtract->run();  
-
-?> 

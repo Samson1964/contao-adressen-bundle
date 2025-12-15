@@ -22,7 +22,7 @@ namespace Schachbulle\ContaoAdressenBundle\Classes;
  * Basisklasse vom FH-Counter
  * Erledigt die Zählung der jeweiligen Contenttypen und schreibt die Zählerwerte in $GLOBALS
  */
-class Suche extends \Module
+class Suche extends \Contao\Module
 {
 
 	var $suchbegriff;
@@ -43,7 +43,7 @@ class Suche extends \Module
 	{
 		if (TL_MODE == 'BE')
 		{
-			$objTemplate = new \BackendTemplate('be_wildcard');
+			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
 			$objTemplate->wildcard = '### ADRESSENSUCHE ###';
 			$objTemplate->title = $this->name;
@@ -54,10 +54,10 @@ class Suche extends \Module
 		else
 		{
 			// FE-Modus: URL mit allen möglichen Parametern auflösen
-			$this->suchbegriff = trim(strtolower(\Input::get('s')));
-			$this->funktion = \Input::get('funktion');
-			$this->linken = strtoupper(\Input::get('join'));
-			$this->liteversion = strtoupper(\Input::get('email'));
+			$this->suchbegriff = trim(strtolower(\Contao\Input::get('s')));
+			$this->funktion = \Contao\Input::get('funktion');
+			$this->linken = strtoupper(\Contao\Input::get('join'));
+			$this->liteversion = strtoupper(\Contao\Input::get('email'));
 		}
 		
 		return parent::generate(); // Weitermachen mit dem Modul
@@ -85,13 +85,13 @@ class Suche extends \Module
 		if($this->suchbegriff || $this->funktion)
 		{
 			// Suchbegriff modifizieren
-			$s = '%'.\StringUtil::generateAlias($this->suchbegriff).'%';
+			$s = '%'.\Contao\StringUtil::generateAlias($this->suchbegriff).'%';
 
 			// Abfrage zusammenbauen je nach Parametern
 			if($this->suchbegriff && !$this->funktion)
 			{
 				// Suchbegriff vorhanden, aber keine Funktion
-				$objSuche = \Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? ORDER BY nachname ASC, vorname ASC')
+				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? ORDER BY nachname ASC, vorname ASC')
 				                                    ->execute($s);
 			}
 			elseif(!$this->suchbegriff && $this->funktion)
@@ -105,7 +105,7 @@ class Suche extends \Module
 					else $sql .= 'funktionen LIKE ';
 					$sql .= '\'%"'.$item.'"%\'';
 				}
-				$objSuche = \Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE '.$sql.' ORDER BY nachname ASC, vorname ASC')
+				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE '.$sql.' ORDER BY nachname ASC, vorname ASC')
 				                                    ->execute();
 			}
 			elseif($this->suchbegriff && $this->funktion)
@@ -119,7 +119,7 @@ class Suche extends \Module
 					else $sql .= 'funktionen LIKE ';
 					$sql .= '\'%"'.$item.'"%\'';
 				}
-				$objSuche = \Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? AND ('.$sql.') ORDER BY nachname ASC, vorname ASC')
+				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? AND ('.$sql.') ORDER BY nachname ASC, vorname ASC')
 				                                    ->execute($s);
 			}
 

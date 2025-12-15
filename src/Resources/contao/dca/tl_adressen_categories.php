@@ -156,7 +156,7 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
  * @author     Leo Feyer <https://contao.org>
  * @package    News
  */
-class tl_adressen_categories extends Backend
+class tl_adressen_categories extends \Contao\Backend
 {
 
 	/**

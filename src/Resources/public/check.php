@@ -14,7 +14,7 @@ require($_SERVER['DOCUMENT_ROOT'].'../../system/initialize.php');
 /**
  * extends \System ?
  */
-class CheckJob extends \PageRegular
+class CheckJob extends \Contao\PageRegular
 {
 
 	var $aktzeit;
@@ -39,7 +39,7 @@ class CheckJob extends \PageRegular
 	{
 		$debugmode = false; // Im Debugmodus werden nur Testmails an Webmaster geschickt
 		// Alle Datensätze laden, wo mindestens eine E-Mail-Adresse eingetragen ist
-		$objAdressen = \Database::getInstance()->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1'")
+		$objAdressen = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1'")
 		                                       ->execute();
 		$mails = 0;
 		while($objAdressen->next())
@@ -93,7 +93,7 @@ class CheckJob extends \PageRegular
 				$text .= "<li>IRC: <b>".$objAdressen->irc."</b></li>\n";
 				if($objAdressen->addImage)
 				{
-					$objModel = \FilesModel::findByUuid($objAdressen->singleSRC);
+					$objModel = \Contao\FilesModel::findByUuid($objAdressen->singleSRC);
 					if ($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
 					{
 						$foto = 'https://www.schachbund.de/'.$objModel->path;
@@ -140,7 +140,7 @@ class CheckJob extends \PageRegular
 				$text .= '</html>';
 				// Mail verschicken
 				$mails++;
-				$email = new \Email();
+				$email = new \Contao\Email();
 				$email->from = 'server@schachbund.de';
 				$email->fromName = 'Deutscher Schachbund';
 				$email->charset = 'utf-8';
@@ -179,5 +179,3 @@ class CheckJob extends \PageRegular
  */
 $objCheck = new CheckJob();
 $objCheck->run();
-
-?>

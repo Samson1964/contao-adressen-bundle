@@ -1,5 +1,10 @@
 # Adressen Changelog
 
+## Version 3.0.0 (2025-12-15)
+
+* Change: Abhängigkeit auf Contao 5 und PHP 8 gesetzt
+* Change: Contao-Klassen-Aufrufe um Namespace \Contao ergänzt
+
 ## Version 2.3.1 (2025-07-01)
 
 * Fix: Warning: Undefined array key "adressen_ImageSize" in src/ContentElements/Adresse.php (line 160) 
