@@ -8,7 +8,7 @@ error_reporting(E_ALL & ~E_NOTICE);
  */ 
 define('TL_MODE', 'FE'); 
 define('TL_FILES_URL', ''); 
-define('TL_SCRIPT', 'php/adressen/extract.php'); 
+define('TL_SCRIPT', 'bundles/contaoadressen/extract.php'); 
 require($_SERVER['DOCUMENT_ROOT'].'../../system/initialize.php'); 
 
 /** 

@@ -41,7 +41,7 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_ImageSize'] = array
 	'eval'                    => array('rgxp'=>'natural', 'includeBlankOption'=>true, 'nospace'=>true, 'helpwizard'=>true, 'tl_class'=>'w50'),
 	'options_callback' => static function ()
 	{
-		return \Contao\System::getContainer()->get('contao.image.image_sizes')->getOptionsForUser(\Contao\BackendUser::getInstance());
+		return \Contao\System::getContainer()->get('contao.image.sizes')->getOptionsForUser(\Contao\BackendUser::getInstance());
 	},
 	'sql'                     => "varchar(255) NOT NULL default ''"
 );

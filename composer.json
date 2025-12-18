@@ -1,7 +1,7 @@
 {
     "name": "schachbulle/contao-adressen-bundle",
     "type": "contao-bundle",
-    "description": "Adressen für Contao 5",
+    "description": "Adressen-Verwaltung für Contao 5",
     "license": "LGPL-3.0-or-later",
     "authors": [
         {
@@ -13,6 +13,7 @@
         "php": "^8",
         "contao/core-bundle": "^5",
         "codefog/contao-haste": "*",
+        "symfony/dependency-injection": "^6.4",
         "menatwork/contao-multicolumnwizard-bundle": "*"
     },
     "conflict": {

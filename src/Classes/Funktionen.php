@@ -43,7 +43,7 @@ class Funktionen extends \Contao\Frontend
 	public function __construct()
 	{
 		// Benutzerdaten laden
-		if(FE_USER_LOGGED_IN)
+		if(\Contao\System::getContainer()->get('contao.security.token_checker')->hasFrontendUser())
 		{
 			// Frontenduser eingeloggt
 			$this->user = \Contao\FrontendUser::getInstance();

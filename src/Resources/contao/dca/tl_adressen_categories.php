@@ -20,8 +20,8 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 	// Config
 	'config' => array
 	(
-		'dataContainer'               => 'Table',
-		'switchToEdit'                => true, 
+		'dataContainer'               => \Contao\DC_Table::class,
+		'switchToEdit'                => true,
 		'enableVersioning'            => true,
 		'sql' => array
 		(
@@ -40,12 +40,14 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 			'mode'                    => 2,
 			'fields'                  => array('category'),
 			'flag'                    => 1,
-			'panelLayout'             => 'myfilter;filter,sort;search,limit',
+			'defaultSearchField'      => 'category',
+			'panelLayout'             => 'filter,sort;search,limit',
 		),
 		'label' => array
 		(
 			'fields'                  => array('category'),
 			'format'                  => '%s',
+			//'label_callback'          => array('tl_adressen_categories', 'addPublishedType'),
 		),
 		'global_operations' => array
 		(
@@ -53,58 +55,22 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 			(
 				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['adressen'],
 				'href'                => 'table=tl_adressen',
-				'icon'                => 'bundles/contaoadressen/images/icon.png',
+				'primary'             => true,
+				'icon'                => 'bundles/contaoadressen/images/icon.svg',
 				'attributes'          => 'onclick="Backend.getScrollOffset();"'
 			),
-			'all' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['MSC']['all'],
-				'href'                => 'act=select',
-				'class'               => 'header_edit_all',
-				'attributes'          => 'onclick="Backend.getScrollOffset()" accesskey="e"'
-			)
+			'!all'
 		),
 		'operations' => array
 		(
-			'edit' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['edit'],
-				'href'                => 'act=edit',
-				'icon'                => 'edit.gif',
-			),
-			/*'copy' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['copy'],
-				'href'                => 'act=copy',
-				'icon'                => 'copy.gif',
-			),
-			'delete' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['delete'],
-				'href'                => 'act=delete',
-				'icon'                => 'delete.gif',
-				'attributes'          => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
-			),*/
+			'!edit',
 			'toggle' => array
 			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['toggle'],
-				'attributes'           => 'onclick="Backend.getScrollOffset()"',
-				'haste_ajax_operation' => array
-				(
-					'field'            => 'active',
-					'options'          => array
-					(
-						array('value' => '', 'icon' => 'invisible.svg'),
-						array('value' => '1', 'icon' => 'visible.svg'),
-					),
-				),
+				'href'                => 'act=toggle&amp;field=active',
+				'icon'                => 'visible.svg',
+				'primary'             => true,
 			),
-			'show' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['show'],
-				'href'                => 'act=show',
-				'icon'                => 'show.gif'
-			),
+			'!show'
 		)
 	),
 
@@ -137,12 +103,13 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 		'active' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen_categories']['active'],
-			'inputType'               => 'checkbox',
+			'toggle'                  => true,
 			'exclude'                 => true,
-			'default'                 => 1,
 			'filter'                  => true,
-			'eval'                    => array('tl_class' => 'w50','isBoolean' => true),
-			'sql'                     => "char(1) NOT NULL default '1'"
+			'flag'                    => \Contao\DataContainer::SORT_INITIAL_LETTER_ASC,
+			'inputType'               => 'checkbox',
+			'eval'                    => array('doNotCopy'=>true, 'tl_class' => 'w50'),
+			'sql'                     => array('type' => 'boolean', 'default' => true)
 		),
 	)
 );
@@ -159,13 +126,12 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 class tl_adressen_categories extends \Contao\Backend
 {
 
-	/**
-	 * Import the back end user object
-	 */
-	public function __construct()
+	public function addPublishedType($row, $label, \Contao\DataContainer $dc, $args)
 	{
-		parent::__construct();
-		$this->import('BackendUser', 'User');
-	}
+		$css = $row['active'] ? 'published' : 'unpublished';
 
+		$args[0] = '<span class="'.$css.'">'.$args[0].'</span>';
+		//$args[1] = $args[1] . '<a href="' . $row['fileLink'] . '"><img src="path/to/icon.png"></a>'; // $args holds an array to your fields and their values. In my case $args[1] refers to the 'fileName' column
+		return $args;
+	}
 }

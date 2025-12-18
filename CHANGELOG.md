@@ -1,5 +1,21 @@
 # Adressen Changelog
 
+## Version 3.0.2 (2025-12-18)
+
+* Fix: Attempted to load class "Table" from the global namespace -> TL_DCA dataContainer muß jetzt \Contao\DC_Table::class statt 'Table' sein
+* Fix: Call to a member function getData() on null in dca/tl_adressen.php -> aus $session = $this->Session->getData() wird $objSession = \Contao\System::getContainer()->get('request_stack')->getSession(); $session = $objSession->all();
+* Fix: Call to a member function setData() on null in dca/tl_adressen.php -> aus $this->Session->setData($session) wird $objSession->replace($session);
+* Fix: Undefined constant "Schachbulle\ContaoAdressenBundle\Classes\FE_USER_LOGGED_IN" in src/Classes/Funktionen.php (line 46) -> Konstante FE_USER_LOGGED_IN ersetzt durch \Contao\System::getContainer()->get('contao.security.token_checker')->hasFrontendUser();
+* Delete: tl_adressen.adressen, tl_adressen.telefone, tl_adressen.emails -> neues Format mit MCW wurde nicht genutzt
+* Change: tl_adressen Spezialfilter an Contao 5/PHP 8 anhnad von Isotope angepaßt
+* Change: tl_adressen::getReferenten ersetzt durch Sprachvariable
+* Change: Wertungsreferenten::getReferenten ersetzt durch Sprachvariable
+* Add: tl_adressen.config.list.sorting.defaultSearchField = 'nachname'
+* Change: PNG-Icons ausgetauscht gegen SVG-Icons
+* Change: PHP-Dateien (extract, check) in public (Cronjobs) durch Symfony-Services ersetzt
+* Add: Cron\ExtrahiereAdressen
+* Add: composer.json "symfony/dependency-injection": "^6.4" -> wegen: In ResolveInstanceofConditionalsPass.php line 168: "Symfony\Component\DependencyInjection\ContainerAwareInterface" is set as an "instanceof" conditional, but it does not exist. Siehe auch https://community.contao.org/de/showthread.php?87239-Fehler-nach-Update-von-5-3-auf-5-4&p=587371&viewfull=1#post587371
+
 ## Version 3.0.1 (2025-12-15)
 
 * Fix: Aufruf Klasse Config in \Contao\Config geändert

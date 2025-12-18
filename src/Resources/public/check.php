@@ -8,7 +8,7 @@ set_time_limit(0);
  */
 define('TL_MODE', 'FE');
 define('TL_FILES_URL', '');
-define('TL_SCRIPT', 'php/adressen/check.php');
+define('TL_SCRIPT', 'bundles/contaoadressen/check.php');
 require($_SERVER['DOCUMENT_ROOT'].'../../system/initialize.php');
 
 /**

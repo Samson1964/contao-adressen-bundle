@@ -1,10 +1,10 @@
 <?php
 
-$GLOBALS["BE_MOD"]["content"]["adressen"] = array(
-	"tables"      => array('tl_adressen', 'tl_adressen_categories'),
-	"icon"        => "bundles/contaoadressen/images/icon.png",
-	"import"      => array("Schachbulle\ContaoAdressenBundle\Classes\Adressen_Backend","importAdressen"),
-	"export"      => array("Schachbulle\ContaoAdressenBundle\Classes\Adressen_Backend","exportAdressen"),
+$GLOBALS['BE_MOD']['content']['adressen'] = array(
+	'tables'      => array('tl_adressen', 'tl_adressen_categories'),
+	'icon'        => 'bundles/contaoadressen/images/icon.svg',
+	'import'      => array('Schachbulle\ContaoAdressenBundle\Classes\Adressen_Backend','importAdressen'),
+	'export'      => array('Schachbulle\ContaoAdressenBundle\Classes\Adressen_Backend','exportAdressen'),
 );
 
 /**
