@@ -145,15 +145,6 @@ class tl_content_adresse extends \Contao\Backend
 {
 
 	/**
-	 * Import the back end user object
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-		$this->import('BackendUser', 'User');
-	}
-
-	/**
 	 * Dynamically add flags to the "singleSRC" field
 	 *
 	 * @param mixed         $varValue
@@ -193,9 +184,22 @@ class tl_content_adresse extends \Contao\Backend
 
 		$title = sprintf($GLOBALS['TL_LANG']['tl_content']['editalias'], $dc->value);
 
-		return ' <a href="contao/main.php?do=adressen&amp;table=tl_adressen&amp;act=edit&amp;id=' . $dc->value . '&amp;popup=1&amp;&amp;rt=' . REQUEST_TOKEN . '" title="' . StringUtil::specialchars($title) . '" onclick="Backend.openModalIframe({\'title\':\'' . StringUtil::specialchars(str_replace("'", "\\'", $title)) . '\',\'url\':this.href});return false">' . Image::getHtml('alias.svg', $title) . '</a>';
-		
-	} 
+		// Backend-URL und Request-Token über die Services erzeugen
+		// (contao/main.php und die Konstante REQUEST_TOKEN existieren in Contao 5 nicht mehr)
+		$strToken = \Contao\System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+		$strUrl = \Contao\System::getContainer()->get('router')->generate('contao_backend', array
+		(
+			'do'    => 'adressen',
+			'table' => 'tl_adressen',
+			'act'   => 'edit',
+			'id'    => $dc->value,
+			'popup' => 1,
+			'rt'    => $strToken,
+		));
+
+		return ' <a href="' . \Contao\StringUtil::specialchars($strUrl) . '" title="' . \Contao\StringUtil::specialchars($title) . '" onclick="Backend.openModalIframe({\'title\':\'' . \Contao\StringUtil::specialchars(str_replace("'", "\\'", $title)) . '\',\'url\':this.href});return false">' . \Contao\Image::getHtml('alias.svg', $title) . '</a>';
+
+	}
 	
 	public function getAdressenListe(\Contao\DataContainer $dc)
 	{
@@ -248,22 +252,32 @@ class tl_content_adresse extends \Contao\Backend
 		{
 			$objAdresse = $this->Database->prepare("SELECT * FROM tl_adressen WHERE id=?")->execute($dc->activeRecord->adresse_id);
 
-			// Bild extrahieren
+			// Bild extrahieren (singleSRC ist eine binäre UUID)
 			if($objAdresse->singleSRC)
 			{
-				$objFile = \Contao\FilesModel::findByPk($objAdresse->singleSRC);
+				$objFile = \Contao\FilesModel::findByUuid($objAdresse->singleSRC);
 			}
 			else
 			{
-				$objFile = \Contao\FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+				$objFile = \Contao\FilesModel::findByUuid(\Contao\Config::get('adressen_defaultImage'));
 			}
 
+			// Vorschaubild über den Image-Studio-Service erzeugen
+			// (Controller::addImageToTemplate() existiert in Contao 5 nicht mehr)
 			$objBild = new \stdClass();
 			$strBild = '';
-			if(isset($objFile->path))
+			if($objFile !== null && isset($objFile->path))
 			{
-				\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize'])), \Config::get('maxImageWidth'), null, $objFile);
-				$strBild = '<img src="'.$objBild->src.'" alt="'.$objBild->alt.'" title="'.$objBild->imageTitle.'" '.$objBild->imgSize.'>';
+				$figure = \Contao\System::getContainer()->get('contao.image.studio')
+					->createFigureBuilder()
+					->fromPath($objFile->path)
+					->setSize(\Contao\StringUtil::deserialize(\Contao\Config::get('adressen_ImageSize')))
+					->buildIfResourceExists();
+				if($figure !== null)
+				{
+					$figure->applyLegacyTemplateData($objBild);
+					$strBild = '<img src="'.($objBild->src ?? '').'" alt="'.($objBild->alt ?? '').'" title="'.($objBild->imageTitle ?? '').'"'.($objBild->imgSize ?? '').'>';
+				}
 			}
 
 			return '

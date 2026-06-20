@@ -25,6 +25,9 @@ class Adresse extends \Contao\ContentElement
 			// Adresse gefunden
 			if($objAdresse)
 			{
+				// Variablen initialisieren (werden je nach *_view-Feld evtl. nicht gesetzt – PHP 8)
+				$telefon = $telefon_fest = $telefon_mobil = $telefax = $email = array();
+
 				// Alternatives Template zuweisen
 				//if($this->adresse_alttemplate) $this->Template = new \FrontendTemplate($this->adresse_tpl);
 
@@ -86,8 +89,7 @@ class Adresse extends \Contao\ContentElement
 				$mailErlaubtArr = array();
 				if($this->adresse_selectmails)
 				{
-					$mailErlaubtArr = unserialize($this->adresse_mails);
-					if(!is_array($mailErlaubtArr)) $mailErlaubtArr = array(); // Neu initialisieren, wenn Array kaputt ist (wegen varchar(64))
+					$mailErlaubtArr = \Contao\StringUtil::deserialize($this->adresse_mails, true);
 				}
 				// Email-Array erstellen
 				if($objAdresse->email_view)
@@ -139,36 +141,41 @@ class Adresse extends \Contao\ContentElement
 				}
 				elseif($objAdresse->singleSRC)
 				{
-					// Foto aus tl_adressen
-					$objFile = \Contao\FilesModel::findByPk($objAdresse->singleSRC);
+					// Foto aus tl_adressen (singleSRC ist eine binäre UUID)
+					$objFile = \Contao\FilesModel::findByUuid($objAdresse->singleSRC);
 				}
 				else
 				{
 					// Standardfoto
-					$objFile = \Contao\FilesModel::findByUuid($GLOBALS['TL_CONFIG']['adressen_defaultImage']);
+					$objFile = \Contao\FilesModel::findByUuid(\Contao\Config::get('adressen_defaultImage'));
 				}
 
 				// Bildformat auswerten
 				if($this->adresse_altformat)
 				{
-					// Format aus System -> Einstellungen überschreiben
-					$imageSize = unserialize($this->size);
+					// Format aus dem Inhaltselement überschreiben
+					$imageSize = \Contao\StringUtil::deserialize($this->size);
 				}
 				else
 				{
 					// Format aus System -> Einstellungen benutzen
-					if(isset($GLOBALS['TL_CONFIG']['adressen_ImageSize'])) $imageSize = unserialize($GLOBALS['TL_CONFIG']['adressen_ImageSize']);
-					else 
-					{
-						\Contao\Message::addError('adressen_ImageSize ist nicht definiert.');
-						\Contao\Controller::redirect('contao/main.php?act=error');
-					}
+					$imageSize = \Contao\StringUtil::deserialize(\Contao\Config::get('adressen_ImageSize'));
 				}
 
+				// Bild über den Image-Studio-Service ins Template-Objekt schreiben
+				// (Controller::addImageToTemplate() existiert in Contao 5 nicht mehr)
 				$objBild = new \stdClass();
-				if(isset($objFile->path))
+				if($objFile !== null && isset($objFile->path))
 				{
-					\Contao\Controller::addImageToTemplate($objBild, array('singleSRC' => $objFile->path, 'size' => $imageSize), \Contao\Config::get('maxImageWidth'), null, $objFile);
+					$figure = \Contao\System::getContainer()->get('contao.image.studio')
+						->createFigureBuilder()
+						->fromPath($objFile->path)
+						->setSize($imageSize)
+						->buildIfResourceExists();
+					if($figure !== null)
+					{
+						$figure->applyLegacyTemplateData($objBild);
+					}
 				}
 				
 				// Daten aus tl_adressen in das Template schreiben
@@ -204,10 +211,10 @@ class Adresse extends \Contao\ContentElement
 					// Foto
 					$this->Template->viewFoto      = $this->adresse_addImage;
 					$this->Template->image         = $objBild->singleSRC;
-					$this->Template->imageSize     = $objBild->imgSize;
-					$this->Template->imageTitle    = $objBild->imageTitle;
-					$this->Template->imageAlt      = $objBild->alt;
-					$this->Template->imageCaption  = $objBild->caption;
+					$this->Template->imageSize     = $objBild->imgSize ?? '';
+					$this->Template->imageTitle    = $objBild->imageTitle ?? '';
+					$this->Template->imageAlt      = $objBild->alt ?? '';
+					$this->Template->imageCaption  = $objBild->caption ?? '';
 					$this->Template->thumbnail     = $objBild->src;
 				}
 
@@ -256,7 +263,7 @@ class Adresse extends \Contao\ContentElement
 		}
 
 		// Adressen (neues Format) zusammenbauen
-		$dataArr = unserialize($objekt->adressen);
+		$dataArr = \Contao\StringUtil::deserialize($objekt->adressen, true);
 		if($dataArr)
 		{
 			foreach($dataArr as $data)

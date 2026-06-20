@@ -17,7 +17,9 @@ class Wertungsreferenten extends \Contao\Module
 	 */
 	public function generate()
 	{
-		if (TL_MODE == 'BE')
+		$objScopeMatcher = \Contao\System::getContainer()->get('contao.routing.scope_matcher');
+		$objRequest = \Contao\System::getContainer()->get('request_stack')->getCurrentRequest();
+		if ($objScopeMatcher->isBackendRequest($objRequest))
 		{
 			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
@@ -52,14 +54,7 @@ class Wertungsreferenten extends \Contao\Module
 			while($objAdressen->next()) 
 			{
 				// Wertungsbezirke extrahieren
-				if($objAdressen->wertungsreferent)
-				{
-					$bezirke = unserialize($objAdressen->wertungsreferent);
-				}
-				else
-				{
-					$bezirke = array();
-				}
+				$bezirke = \Contao\StringUtil::deserialize($objAdressen->wertungsreferent, true);
 				
 				if($bezirke)
 				{
@@ -99,7 +94,7 @@ class Wertungsreferenten extends \Contao\Module
 		if($data->titel) $template->name = $data->titel." ".$template->name;
 
 		// Visitenkarte zusammenbauen
-		if($objAdresse->text)
+		if($data->text)
 		{
 			$template->visitenkarte = str_replace("\r\n","<br />",$data->text);
 			$template->visitenkarte = str_replace("\n","<br />",$template->visitenkarte);
@@ -163,25 +158,25 @@ class Wertungsreferenten extends \Contao\Module
 		if($this->adresse_viewfoto)
 		{
 			// Fotoausgabe erwünscht, jetzt die Quelle bestimmen
+			$projectDir = \Contao\System::getContainer()->getParameter('kernel.project_dir');
 			if($this->addImage && $this->singleSRC != '')
 			{
 				// Bild aus Inhaltselement verwenden!
 				if($this->singleSRC)
 				{
-					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \Contao\FilesModel::findByUuid($this->singleSRC) : $objModel = \FilesModel::findByPk($this->singleSRC);
-					if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
+					$objModel = \Contao\FilesModel::findByUuid($this->singleSRC);
+					if($objModel !== null && is_file($projectDir . '/' . $objModel->path))
 					{
-						$bildurl = $objModel->path;
-						$bildarray['singleSRC'] = $bildurl;
-						$bildarray['alt'] = $this->alt;
-						$bildarray['size'] = $this->size;
-						$bildarray['imagemargin'] = $this->imagemargin;
-						$bildarray['imageUrl'] = $this->imageUrl;
-						$bildarray['fullsize'] = $this->fullsize;
-						$bildarray['caption'] = $this->caption;
-						$bildarray['floating'] = $this->floating;
-						// Templatewerte des Bildes von Contao zusammenbauen lassen
-						$this->addImageToTemplate($template, $bildarray); 
+						// Templatewerte des Bildes vom Image-Studio zusammenbauen lassen
+						$figure = \Contao\System::getContainer()->get('contao.image.studio')
+							->createFigureBuilder()
+							->fromPath($objModel->path)
+							->setSize($this->size)
+							->buildIfResourceExists();
+						if($figure !== null)
+						{
+							$figure->applyLegacyTemplateData($template, $this->imagemargin, $this->floating);
+						}
 					}
 				}
 			}
@@ -190,13 +185,18 @@ class Wertungsreferenten extends \Contao\Module
 				// Bild aus tl_adressen verwenden!
 				if($data->singleSRC)
 				{
-					(version_compare(VERSION, '3.2', '>=')) ? $objModel = \Contao\FilesModel::findByUuid($data->singleSRC) : $objModel = \FilesModel::findByPk($data->singleSRC);
-					if($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
+					$objModel = \Contao\FilesModel::findByUuid($data->singleSRC);
+					if($objModel !== null && is_file($projectDir . '/' . $objModel->path))
 					{
-						$bildurl = $objModel->path;
-						$data->singleSRC = $bildurl;
-						// Templatewerte des Bildes von Contao zusammenbauen lassen
-						$this->addImageToTemplate($template, $data->row()); 
+						// Templatewerte des Bildes vom Image-Studio zusammenbauen lassen
+						$figure = \Contao\System::getContainer()->get('contao.image.studio')
+							->createFigureBuilder()
+							->fromPath($objModel->path)
+							->buildIfResourceExists();
+						if($figure !== null)
+						{
+							$figure->applyLegacyTemplateData($template);
+						}
 					}
 				}
 			}

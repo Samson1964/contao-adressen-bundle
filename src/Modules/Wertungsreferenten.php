@@ -16,7 +16,9 @@ class Wertungsreferenten extends \Contao\Module
 	 */
 	public function generate()
 	{
-		if (TL_MODE == 'BE')
+		$objScopeMatcher = \Contao\System::getContainer()->get('contao.routing.scope_matcher');
+		$objRequest = \Contao\System::getContainer()->get('request_stack')->getCurrentRequest();
+		if ($objScopeMatcher->isBackendRequest($objRequest))
 		{
 			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
@@ -58,14 +60,7 @@ class Wertungsreferenten extends \Contao\Module
 			while($objAdressen->next())
 			{
 				// Wertungsbezirke extrahieren
-				if($objAdressen->wertungsreferent)
-				{
-					$bezirke = unserialize($objAdressen->wertungsreferent);
-				}
-				else
-				{
-					$bezirke = array();
-				}
+				$bezirke = \Contao\StringUtil::deserialize($objAdressen->wertungsreferent, true);
 
 				if($bezirke)
 				{
@@ -86,11 +81,12 @@ class Wertungsreferenten extends \Contao\Module
 		}
 		
 		// Daten übertragen
+		$class = '';
 		foreach($bezirksname as $key => $value)
 		{
 			if($class == 'odd') $class = 'even';
 			else $class = 'odd';
-			$eintrag = str_replace('##KLASSE##', $class, $bezirksadresse[$key]);
+			$eintrag = str_replace('##KLASSE##', $class, $bezirksadresse[$key] ?? '');
 			$content .= $eintrag;
 		}
 		$content .= '</table>';
@@ -100,6 +96,7 @@ class Wertungsreferenten extends \Contao\Module
 
 	function FormatiereKontakt($data)
 	{
+		$content = '';
 
 		// Telefon-Arrays erstellen
 		$telefon = array();

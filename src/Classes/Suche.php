@@ -41,7 +41,9 @@ class Suche extends \Contao\Module
 	 */
 	public function generate()
 	{
-		if (TL_MODE == 'BE')
+		$objScopeMatcher = \Contao\System::getContainer()->get('contao.routing.scope_matcher');
+		$objRequest = \Contao\System::getContainer()->get('request_stack')->getCurrentRequest();
+		if ($objScopeMatcher->isBackendRequest($objRequest))
 		{
 			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 

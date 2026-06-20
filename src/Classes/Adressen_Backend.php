@@ -12,7 +12,7 @@ class Adressen_Backend extends \Contao\Backend
 
 	public function exportAdressen(\Contao\DataContainer $dc)
 	{
-		if($this->Input->get('key') != 'export')
+		if(\Contao\Input::get('key') != 'export')
 		{
 			// Export-Befehl fehlt
 			return '';
@@ -71,17 +71,8 @@ class Adressen_Backend extends \Contao\Backend
 			return '';
 		}
 
-		// Objekt BackendUser importieren
-		$this->import('BackendUser','User');
-		$class = $this->User->uploader;
-
-		// See #4086
-		if (!class_exists($class))
-		{
-			$class = 'FileUpload';
-		}
-
-		$objUploader = new $class();
+		// Datei-Upload-Widget instanzieren (Contao 5)
+		$objUploader = new \Contao\FileUpload();
 
 		// Formular wurde abgeschickt, CSS-Datei importieren
 		if (\Contao\Input::post('FORM_SUBMIT') == 'tl_table_import')
@@ -98,7 +89,7 @@ class Adressen_Backend extends \Contao\Backend
 
 			foreach ($arrUploaded as $strCsvFile)
 			{
-				$objFile = new \File($strCsvFile, true);
+				$objFile = new \Contao\File($strCsvFile);
 				$arrTable = array();
 
 				if ($objFile->extension != 'csv')
@@ -177,7 +168,7 @@ class Adressen_Backend extends \Contao\Backend
 						$values = '"'.$values.'"';
 						// Prüfen, wenn ID (Primärschlüssel) mit im Import ist und in Datenbank
 						//$this->Database->prepare("SELECT id FROM ".$dc->table." WHERE id = ?")->execute(\Input::get('id')); 
-						$this->Database->prepare("INSERT INTO ".$dc->table." (".$feldnamen.") VALUES (".$values.")")->execute(\Input::get('id')); 
+						$this->Database->prepare("INSERT INTO ".$dc->table." (".$feldnamen.") VALUES (".$values.")")->execute(\Contao\Input::get('id'));
 					}
 				}
 			}
@@ -189,22 +180,25 @@ class Adressen_Backend extends \Contao\Backend
 //						   ->execute(serialize($arrTable), \Input::get('id'));
 
 			// Cookie setzen und zurückkehren zur Adressenliste (key=import aus URL entfernen)
-			\System::setCookie('BE_PAGE_OFFSET', 0, 0);
+			\Contao\System::setCookie('BE_PAGE_OFFSET', 0, 0);
 			$this->redirect(str_replace('&key=import', '', \Contao\Environment::get('request')));
 		}
+
+		// Request-Token (REQUEST_TOKEN-Konstante existiert in Contao 5 nicht mehr)
+		$strToken = \Contao\System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
 
 		// Return form
 		return '
 <div id="tl_buttons">
-<a href="'.ampersand(str_replace('&key=import', '', \Contao\Environment::get('request'))).'" class="header_back" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle']).'" accesskey="b">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+<a href="'.\Contao\StringUtil::ampersand(str_replace('&key=import', '', \Contao\Environment::get('request'))).'" class="header_back" title="'.\Contao\StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle']).'" accesskey="b">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
 </div>
 
 <h2 class="sub_headline">'.$GLOBALS['TL_LANG']['MSC']['tw_import'][1].'</h2>
 '.\Contao\Message::generate().'
-<form action="'.ampersand(\Environment::get('request'), true).'" id="tl_table_import" class="tl_form" method="post" enctype="multipart/form-data">
+<form action="'.\Contao\StringUtil::ampersand(\Contao\Environment::get('request'), true).'" id="tl_table_import" class="tl_form" method="post" enctype="multipart/form-data">
 <div class="tl_formbody_edit">
 <input type="hidden" name="FORM_SUBMIT" value="tl_table_import">
-<input type="hidden" name="REQUEST_TOKEN" value="'.REQUEST_TOKEN.'">
+<input type="hidden" name="REQUEST_TOKEN" value="'.$strToken.'">
 
 <div class="tl_tbox">
   <h3><label for="separator">'.$GLOBALS['TL_LANG']['MSC']['separator'][0].'</label></h3>
@@ -223,7 +217,7 @@ class Adressen_Backend extends \Contao\Backend
 <div class="tl_formbody_submit">
 
 <div class="tl_submit_container">
-  <input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="'.specialchars($GLOBALS['TL_LANG']['MSC']['tw_import'][0]).'">
+  <input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="'.\Contao\StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['tw_import'][0]).'">
 </div>
 
 </div>

@@ -4,10 +4,21 @@ services:
             calls:
                 - ["setFramework", ["@contao.framework"]]
 
-        Symfony\Component\DependencyInjection\ContainerAwareInterface:
-            calls:
-                - ["setContainer", ["@service_container"]]
-
-    Schachbulle\ContaoAdressenBundle\Cron\ExtrahiereAdressen:
+    # Cronjob: Ermittelt die Einbindungen und befüllt tl_adressen.links (täglich)
+    contao.cron.adressen_extrahieren:
+        class: Schachbulle\ContaoAdressenBundle\Cron\ExtrahiereAdressen
+        arguments:
+            - '@contao.framework'
+            - '@monolog.logger.contao.cron'
         tags:
-            - { name: contao.cronjob, interval: minutely }
+            - { name: contao.cronjob, interval: daily }
+
+    # Cronjob: Versendet die Kontroll-/Verifizierungs-E-Mails
+    # (vierteljährlich: 1. Januar/April/Juli/Oktober um 04:00 Uhr)
+    contao.cron.adressen_kontrollieren:
+        class: Schachbulle\ContaoAdressenBundle\Cron\KontrolliereAdressen
+        arguments:
+            - '@contao.framework'
+            - '@monolog.logger.contao.cron'
+        tags:
+            - { name: contao.cronjob, interval: '0 4 1 */3 *' }

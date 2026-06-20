@@ -678,7 +678,7 @@ class tl_adressen extends \Contao\Backend
 	public function addIcon($row, $label, \Contao\DataContainer $dc, $args)
 	{
 		// Anzahl Einbindungen feststellen und Singular/Plural zuweisen
-		$seiten = count(explode("\n",$row['links']))-1;
+		$seiten = count(explode("\n",(string) ($row['links'] ?? '')))-1;
 		($seiten == 1) ? ($wort = 'Seite') : ($wort = 'Seiten');
 
 		if(!$row['aktiv'])
@@ -770,7 +770,7 @@ class tl_adressen extends \Contao\Backend
 	 */
 	public function pagePicker(\Contao\DataContainer $dc)
 	{
-		return ' <a href="contao/page.php?do='.Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
+		return ' <a href="contao/page.php?do='.\Contao\Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.\Contao\StringUtil::specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((\Contao\Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . \Contao\Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
 	}
 
 	public function addAdresse($email, $id)

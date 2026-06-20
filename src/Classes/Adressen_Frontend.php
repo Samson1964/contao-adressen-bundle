@@ -16,6 +16,12 @@ class Adressen_Frontend extends \Contao\Frontend
 	 */
 	protected $strTemplate = 'ce_adressen_inserttag';
 
+	/**
+	 * Template-Objekt (Frontend hat kein __set, daher explizit deklarieren – PHP 8.2)
+	 * @var \Contao\FrontendTemplate
+	 */
+	protected $Template;
+
 	public function adresse_ersetzen($strTag)
 	{
 
@@ -110,7 +116,8 @@ class Adressen_Frontend extends \Contao\Frontend
 						if(is_numeric($objAdresse->bild))
 						{
 							$objModel = \Contao\FilesModel::findByPk($objAdresse->bild);
-							if ($objModel !== null && is_file(TL_ROOT . '/' . $objModel->path))
+							$projectDir = \Contao\System::getContainer()->getParameter('kernel.project_dir');
+							if ($objModel !== null && is_file($projectDir . '/' . $objModel->path))
 							{
 								if($fotobreite && $fotohoehe)
 								{
@@ -130,7 +137,16 @@ class Adressen_Frontend extends \Contao\Frontend
 									$hoehe = 56;
 								}
 								$this->Template->bildurl = $objModel->path;
-								$this->Template->thumburl = $this->getImage($this->urlEncode($objModel->path),$breite,$hoehe,$ausrichtung);
+								// Thumbnail über den Image-Studio-Service erzeugen (Controller::getImage() existiert in Contao 5 nicht mehr)
+								$figure = \Contao\System::getContainer()->get('contao.image.studio')
+									->createFigureBuilder()
+									->fromPath($objModel->path)
+									->setSize(array($breite, $hoehe, $ausrichtung))
+									->buildIfResourceExists();
+								if($figure !== null)
+								{
+									$this->Template->thumburl = $figure->getImage()->getImageSrc();
+								}
 							}
 						}
 					}
@@ -192,12 +208,14 @@ class Adressen_Frontend extends \Contao\Frontend
 					// Email zusammenbauen
 					if($objAdresse->email_view)
 					{
-						if($objAdresse->email1) $this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email1."}}");
-						if($objAdresse->email2) ($this->Template->email) ? ($this->Template->email .= ", ".$this->replaceInsertTags("{{email::".$objAdresse->email2."}}")) : ($this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email2."}}"));
-						if($objAdresse->email3) ($this->Template->email) ? ($this->Template->email .= ", ".$this->replaceInsertTags("{{email::".$objAdresse->email3."}}")) : ($this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email3."}}"));
-						if($objAdresse->email4) ($this->Template->email) ? ($this->Template->email .= ", ".$this->replaceInsertTags("{{email::".$objAdresse->email4."}}")) : ($this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email4."}}"));
-						if($objAdresse->email5) ($this->Template->email) ? ($this->Template->email .= ", ".$this->replaceInsertTags("{{email::".$objAdresse->email5."}}")) : ($this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email5."}}"));
-						if($objAdresse->email6) ($this->Template->email) ? ($this->Template->email .= ", ".$this->replaceInsertTags("{{email::".$objAdresse->email6."}}")) : ($this->Template->email .= $this->replaceInsertTags("{{email::".$objAdresse->email6."}}"));
+						// InsertTag-Parser-Service (Controller::replaceInsertTags() existiert in Contao 5 nicht mehr)
+						$insertTagParser = \Contao\System::getContainer()->get('contao.insert_tag.parser');
+						if($objAdresse->email1) $this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email1."}}");
+						if($objAdresse->email2) ($this->Template->email) ? ($this->Template->email .= ", ".$insertTagParser->replaceInline("{{email::".$objAdresse->email2."}}")) : ($this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email2."}}"));
+						if($objAdresse->email3) ($this->Template->email) ? ($this->Template->email .= ", ".$insertTagParser->replaceInline("{{email::".$objAdresse->email3."}}")) : ($this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email3."}}"));
+						if($objAdresse->email4) ($this->Template->email) ? ($this->Template->email .= ", ".$insertTagParser->replaceInline("{{email::".$objAdresse->email4."}}")) : ($this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email4."}}"));
+						if($objAdresse->email5) ($this->Template->email) ? ($this->Template->email .= ", ".$insertTagParser->replaceInline("{{email::".$objAdresse->email5."}}")) : ($this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email5."}}"));
+						if($objAdresse->email6) ($this->Template->email) ? ($this->Template->email .= ", ".$insertTagParser->replaceInline("{{email::".$objAdresse->email6."}}")) : ($this->Template->email .= $insertTagParser->replaceInline("{{email::".$objAdresse->email6."}}"));
 					}
 					// Restliche Daten in das Template schreiben
 					$this->Template->id       = $objAdresse->id      ;

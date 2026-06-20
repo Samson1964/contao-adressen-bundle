@@ -13,7 +13,7 @@
         "php": "^8",
         "contao/core-bundle": "^5",
         "codefog/contao-haste": "*",
-        "symfony/dependency-injection": "^6.4",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
         "menatwork/contao-multicolumnwizard-bundle": "*"
     },
     "conflict": {
