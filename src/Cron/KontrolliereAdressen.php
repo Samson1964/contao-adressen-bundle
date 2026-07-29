@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Schachbulle\ContaoAdressenBundle\Cron;
 
+use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\Email;
@@ -28,35 +29,20 @@ use Psr\Log\LoggerInterface;
  * Das Ausführungsintervall wird in Resources/config/services.yaml über den
  * Tag "contao.cronjob" (interval) festgelegt.
  *
- * ACHTUNG: Dieser Cronjob verschickt E-Mails an echte Empfänger. Solange die
- * Konstante TESTMODUS auf true steht, gehen alle E-Mails ausschließlich an den
- * unten definierten Test-Empfänger. Zum Scharfschalten TESTMODUS auf false setzen.
+ * Alle Einstellungen (Absender, Betreff, Testmodus …) stehen im Backend unter
+ * System -> Einstellungen -> "Adressen: Kontroll-E-Mails".
+ *
+ * ACHTUNG: Dieser Cronjob verschickt E-Mails an echte Empfänger. Er tut das
+ * erst, wenn die Einstellung "Kontroll-E-Mails scharfschalten"
+ * (adressen_cron_live) gesetzt ist. Ohne diesen Haken laufen alle E-Mails
+ * ausschließlich an den eingetragenen Test-Empfänger.
  */
 class KontrolliereAdressen
 {
 	/**
-	 * Testmodus: true = E-Mails gehen NUR an den Test-Empfänger,
-	 * false = E-Mails gehen an die jeweiligen Kontakte (Live-Betrieb).
+	 * Vorgabe für den Betreff, wenn in den Einstellungen keiner hinterlegt ist
 	 */
-	private const TESTMODUS = false;
-
-	/**
-	 * Empfänger im Testmodus
-	 */
-	private const TEST_EMPFAENGER = 'Frank Binding <webmaster@schachbund.com>';
-
-	/**
-	 * Absender, Antwortadresse und Betreff der Kontroll-E-Mail
-	 */
-	private const ABSENDER      = 'server@schachbund.de';
-	private const ABSENDER_NAME = 'Deutscher Schachbund';
-	private const ANTWORT_AN    = 'DSB-Presse <presse@schachbund.com>';
-	private const BETREFF       = '[Deutscher Schachbund] Adressen-Überprüfung';
-
-	/**
-	 * Basis-URL für die Anzeige des Standardfotos in der E-Mail
-	 */
-	private const FOTO_BASIS_URL = 'https://www.schachbund.de/';
+	private const BETREFF_STANDARD = 'Adressen-Überprüfung';
 
 	/**
 	 * Felder, die in der E-Mail aufgelistet werden: [Beschriftung => Spalte]
@@ -106,8 +92,32 @@ class KontrolliereAdressen
 
 	public function __invoke(): void
 	{
-		// Contao-Framework initialisieren (Legacy-Klassen Database, FilesModel, Email)
+		// Contao-Framework initialisieren (Legacy-Klassen Config, Database, FilesModel, Email)
 		$this->framework->initialize();
+
+		$strAbsender = self::einstellung('adressen_cron_absender');
+
+		if ($strAbsender === '')
+		{
+			$this->logger?->error('[Adressen-Verwaltung] Kontroll-E-Mails übersprungen: In den Einstellungen ist keine Absenderadresse hinterlegt.');
+
+			return;
+		}
+
+		// Ohne den Schalter "scharfschalten" bleibt der Cronjob im Testmodus
+		$blnLive          = (bool) Config::get('adressen_cron_live');
+		$strTestEmpfaenger = self::einstellung('adressen_cron_testempfaenger');
+
+		if (!$blnLive && $strTestEmpfaenger === '')
+		{
+			$this->logger?->error('[Adressen-Verwaltung] Kontroll-E-Mails übersprungen: Der Cronjob läuft im Testmodus, es ist aber kein Test-Empfänger hinterlegt.');
+
+			return;
+		}
+
+		$strBetreff = self::einstellung('adressen_cron_betreff') ?: self::BETREFF_STANDARD;
+		$strReplyTo = self::einstellung('adressen_cron_replyto') ?: $strAbsender;
+		$strName    = self::einstellung('adressen_cron_absendername');
 
 		$objAdressen = Database::getInstance()
 			->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1' AND links != ''")
@@ -125,22 +135,19 @@ class KontrolliereAdressen
 			}
 
 			$objEmail = new Email();
-			$objEmail->from     = self::ABSENDER;
-			$objEmail->fromName = self::ABSENDER_NAME;
+			$objEmail->from     = $strAbsender;
 			$objEmail->charset  = 'utf-8';
-			$objEmail->subject  = self::BETREFF;
-			$objEmail->html     = $this->erzeugeText($objAdressen);
-			$objEmail->replyTo(self::ANTWORT_AN);
+			$objEmail->subject  = $strBetreff;
+			$objEmail->html     = $this->erzeugeText($objAdressen, $strBetreff);
+			$objEmail->replyTo($strReplyTo);
+
+			if ($strName !== '')
+			{
+				$objEmail->fromName = $strName;
+			}
 
 			// Versenden – im Testmodus ausschließlich an den Test-Empfänger
-			if (self::TESTMODUS)
-			{
-				$objEmail->sendTo(self::TEST_EMPFAENGER);
-			}
-			else
-			{
-				$objEmail->sendTo($arrEmpfaenger);
-			}
+			$objEmail->sendTo($blnLive ? $arrEmpfaenger : $strTestEmpfaenger);
 
 			$intMails++;
 		}
@@ -148,8 +155,16 @@ class KontrolliereAdressen
 		$this->logger?->info(sprintf(
 			'[Adressen-Verwaltung] %d Kontroll-E-Mails verschickt%s',
 			$intMails,
-			self::TESTMODUS ? ' (Testmodus – nur an den Test-Empfänger)' : ''
+			$blnLive ? '' : ' (Testmodus – nur an '.$strTestEmpfaenger.')'
 		));
+	}
+
+	/**
+	 * Liest eine Einstellung aus System -> Einstellungen als getrimmten String.
+	 */
+	private static function einstellung(string $strKey): string
+	{
+		return trim((string) Config::get($strKey));
 	}
 
 	/**
@@ -188,18 +203,22 @@ class KontrolliereAdressen
 	/**
 	 * Baut den HTML-Text der Kontroll-E-Mail zusammen.
 	 */
-	private function erzeugeText(object $objAdresse): string
+	private function erzeugeText(object $objAdresse, string $strBetreff): string
 	{
 		$strText  = '<html>';
 		$strText .= '<head>';
 		$strText .= '<meta charset="utf-8">';
-		$strText .= '<title>'.StringUtil::specialchars(self::BETREFF).'</title>';
+		$strText .= '<title>'.StringUtil::specialchars($strBetreff).'</title>';
 		$strText .= '<style>body {font-family:Verdana; font-size:12px;}</style>';
 		$strText .= '</head>';
 		$strText .= '<body>';
-		$strText .= '<p>Liebe Schachfreundin, lieber Schachfreund,</p>';
-		$strText .= '<p>in regelmäßigen Abständen werden die in unserer internen Adressen-Datenbank gespeicherten Datensätze automatisch mittels der dort hinterlegten E-Mail-Adresse(n) überprüft.<br>';
-		$strText .= 'Bitte nehmen Sie sich kurz Zeit und werfen Sie einen Blick auf die nachfolgend aufgeführten Daten. Melden Sie uns Änderungen, indem Sie diese E-Mail beantworten.</p>';
+
+		// Anrede und Einleitung stehen in der Sprachdatei und lassen sich damit
+		// projektweise überschreiben, ohne den Cronjob anzufassen
+		System::loadLanguageFile('default');
+
+		$strText .= '<p>'.($GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede'] ?? 'Guten Tag,').'</p>';
+		$strText .= '<p>'.($GLOBALS['TL_LANG']['MSC']['adressen_cron_einleitung'] ?? '').'</p>';
 
 		$strText .= self::erzeugeListe($objAdresse, self::FELDER_ADRESSE);
 		$strText .= '<p><i>(E-Mail-Adressen werden für Spambots nicht lesbar dargestellt!)</i></p>'."\n";
@@ -227,8 +246,15 @@ class KontrolliereAdressen
 		}
 
 		$strText .= '</ul>';
-		$strText .= '<p>Deutscher Schachbund e.V.<br>';
-		$strText .= 'Öffentlichkeitsarbeit</p>';
+
+		// Als Grußformel dient der in den Einstellungen hinterlegte Absendername
+		$strName = self::einstellung('adressen_cron_absendername');
+
+		if ($strName !== '')
+		{
+			$strText .= '<p>'.StringUtil::specialchars($strName).'</p>';
+		}
+
 		$strText .= '<p><i>Dies ist eine automatisch generierte E-Mail.</i></p>';
 		$strText .= '</body>';
 		$strText .= '</html>';
@@ -277,6 +303,14 @@ class KontrolliereAdressen
 			return '<li>Standardfoto: <b>-</b></li>'."\n";
 		}
 
+		// Ohne Basis-URL lässt sich das Foto in der E-Mail nicht anzeigen
+		$strBasisUrl = self::einstellung('adressen_cron_fotourl');
+
+		if ($strBasisUrl === '')
+		{
+			return '<li>Standardfoto: <b>-</b></li>'."\n";
+		}
+
 		$objModel      = FilesModel::findByUuid($objAdresse->singleSRC);
 		$strProjectDir = System::getContainer()->getParameter('kernel.project_dir');
 
@@ -287,7 +321,7 @@ class KontrolliereAdressen
 
 		$strHinweis = 'Das Standardfoto wird wie im Vorschaubild verkleinert angezeigt, wenn die Fotoanzeige aktiviert ist. Statt des Standardfotos kann auf den jeweiligen Seiten auch ein anderes Foto eingebunden sein.';
 
-		$strFoto = StringUtil::specialchars(self::FOTO_BASIS_URL.$objModel->path);
+		$strFoto = StringUtil::specialchars(rtrim($strBasisUrl, '/').'/'.$objModel->path);
 
 		return '<li>Standardfoto: <a href="'.$strFoto.'"><img src="'.$strFoto.'" height="80" alt="Standardfoto"></a></li>'."\n";
 	}

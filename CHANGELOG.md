@@ -1,5 +1,53 @@
 # Adressen Changelog
 
+## Version 4.1.0 (2026-07-29) - mit Claude Code
+
+Die Einstellungen des Kontroll-Cronjobs stecken nicht mehr als Konstanten im Quelltext,
+sondern stehen im Backend unter *System → Einstellungen → „Adressen: Kontroll-E-Mails"*.
+
+### ⚠️ Update-Hinweise
+
+* **Der Cronjob läuft nach dem Update zunächst im Testmodus und verschickt gar nichts,
+  bis die Einstellungen gepflegt sind.** Das ist Absicht: Der frühere Zustand
+  (`TESTMODUS = false` im Quelltext) hätte beim nächsten Quartalslauf ungefragt an alle
+  echten Kontakte gemailt.
+* Zu setzen sind mindestens **Absenderadresse** und – solange nicht scharfgeschaltet
+  wird – der **Test-Empfänger**. Fehlt eines von beidem, bricht der Cronjob ab und
+  schreibt eine Meldung ins Log (`contao.cron`).
+* Erst der Haken **„Kontroll-E-Mails scharfschalten"** sendet an die echten Kontakte.
+
+### Neue Einstellungen (tl_settings)
+
+| Feld | Bedeutung |
+|---|---|
+| `adressen_cron_absender` | Absenderadresse; ohne sie verschickt der Cronjob nichts |
+| `adressen_cron_absendername` | Absendername, dient zugleich als Grußformel am Ende der E-Mail |
+| `adressen_cron_replyto` | Antwortadresse (leer = Absenderadresse) |
+| `adressen_cron_betreff` | Betreffzeile |
+| `adressen_cron_fotourl` | Basis-URL der Website für die Foto-Anzeige (leer = kein Foto in der E-Mail) |
+| `adressen_cron_live` | Sicherheitsschalter: erst mit Haken gehen E-Mails an die echten Kontakte |
+| `adressen_cron_testempfaenger` | Empfänger im Testmodus |
+
+### Änderungen
+
+* Change: Die Konstanten `TESTMODUS`, `TEST_EMPFAENGER`, `ABSENDER`, `ABSENDER_NAME`,
+  `ANTWORT_AN`, `BETREFF` und `FOTO_BASIS_URL` in `Cron\KontrolliereAdressen` wurden durch
+  die obigen Einstellungen ersetzt.
+* Change: Der Schalter ist umgedreht – statt `TESTMODUS` (Standard im Code: `false` =
+  scharf) gibt es jetzt `adressen_cron_live` (Standard: nicht gesetzt = Testmodus). Eine
+  nicht gepflegte Installation kann damit keine ungewollten E-Mails auslösen.
+* Change: Die fest verdrahtete Grußformel „Deutscher Schachbund e.V. /
+  Öffentlichkeitsarbeit" entfällt; stattdessen wird der eingestellte Absendername
+  ausgegeben.
+* Change: Anrede und Einleitung der E-Mail stehen jetzt als
+  `$GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede']` bzw. `…_einleitung` in der
+  Sprachdatei und lassen sich damit projektweise überschreiben, ohne den Cronjob
+  anzufassen.
+* Change: Der Cronjob protokolliert jetzt auch, warum er nichts getan hat (fehlende
+  Absenderadresse, fehlender Test-Empfänger), und nennt im Testmodus den Empfänger.
+* Fix: Die Basis-URL für Fotos wird sauber mit dem Dateipfad verbunden (`rtrim`/`/`),
+  vorher konnten doppelte oder fehlende Schrägstriche entstehen.
+
 ## Version 4.0.0 (2026-07-29) - mit Claude Code
 
 Das Bundle läuft jetzt sowohl unter **Contao 4.13** als auch unter **Contao 5** (getestet

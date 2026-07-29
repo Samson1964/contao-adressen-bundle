@@ -87,14 +87,34 @@ URL-Parameter der Suche: `s` (Suchbegriff), `funktion[]` (Kategorie-IDs), `join`
 | `schachbulle.adressen.cron.extrahieren` | täglich | Ermittelt, auf welchen veröffentlichten Seiten jede Adresse eingebunden ist, und schreibt die URLs nach `tl_adressen.links`. |
 | `schachbulle.adressen.cron.kontrollieren` | 1. Jan/Apr/Jul/Okt, 04:00 Uhr | Verschickt an alle aktiven, eingebundenen Adressen eine E-Mail mit den gespeicherten Daten und der Bitte um Korrekturmeldungen. |
 
-> **Achtung:** Der Kontroll-Cronjob verschickt E-Mails an echte Empfänger. Zum Testen die
-> Konstante `KontrolliereAdressen::TESTMODUS` auf `true` setzen – dann gehen alle E-Mails
-> ausschließlich an `KontrolliereAdressen::TEST_EMPFAENGER`.
+> **Achtung:** Der Kontroll-Cronjob verschickt E-Mails an echte Empfänger. Er tut das erst,
+> wenn in den Einstellungen der Haken **„Kontroll-E-Mails scharfschalten"** gesetzt ist.
+> Ohne diesen Haken gehen alle E-Mails ausschließlich an den eingetragenen Test-Empfänger.
 
 ### Systemeinstellungen
 
 Unter *System → Einstellungen → Adressen* lassen sich ein Standardbild und die Bildgröße
 festlegen, die verwendet werden, wenn eine Adresse kein eigenes Foto hat.
+
+Unter *System → Einstellungen → Adressen: Kontroll-E-Mails* wird der Kontroll-Cronjob
+konfiguriert:
+
+| Feld | Bedeutung |
+|---|---|
+| Absenderadresse | Ohne Eintrag verschickt der Cronjob nichts. |
+| Absendername | Wird als Absender angezeigt und dient als Grußformel am Ende der E-Mail. |
+| Antwortadresse | Leer lassen, um die Absenderadresse zu verwenden. Schreibweise mit Namen erlaubt. |
+| Betreff | Betreffzeile der E-Mail. |
+| Basis-URL für Fotos | Vollständige Adresse der Website. Leer lassen, um kein Foto anzuzeigen. |
+| Kontroll-E-Mails scharfschalten | Erst mit Haken gehen die E-Mails an die echten Kontakte. |
+| Test-Empfänger | Empfänger im Testmodus. |
+
+Fehlt die Absenderadresse – oder im Testmodus der Test-Empfänger – bricht der Cronjob ab
+und schreibt eine Meldung in das Log `contao.cron`.
+
+Anrede und Einleitungstext der E-Mail stehen in der Sprachdatei
+(`$GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede']` und `…_einleitung`) und lassen sich
+über eine eigene Sprachdatei im Projekt überschreiben.
 
 ## Templates
 

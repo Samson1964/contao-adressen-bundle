@@ -10,6 +10,15 @@ declare(strict_types=1);
 
 $GLOBALS['TL_LANG']['CTE']['adressen'] = array('Adresse', 'Eine Adresse einfügen');
 
+/*
+ * Texte der Kontroll-E-Mail (Cron\KontrolliereAdressen)
+ *
+ * Anrede und Einleitung lassen sich projektweise überschreiben, indem diese
+ * beiden Schlüssel in einer eigenen Sprachdatei neu gesetzt werden.
+ */
+$GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede'] = 'Liebe Schachfreundin, lieber Schachfreund,';
+$GLOBALS['TL_LANG']['MSC']['adressen_cron_einleitung'] = 'in regelmäßigen Abständen werden die in unserer internen Adressen-Datenbank gespeicherten Datensätze automatisch mittels der dort hinterlegten E-Mail-Adresse(n) überprüft.<br>Bitte nehmen Sie sich kurz Zeit und werfen Sie einen Blick auf die nachfolgend aufgeführten Daten. Melden Sie uns Änderungen, indem Sie diese E-Mail beantworten.';
+
 $GLOBALS['TL_LANG']['tl_adressen']['verbaende'] = array
 (
 	'00000' => '00000 Deutscher Schachbund',
