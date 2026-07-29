@@ -48,8 +48,6 @@
   Contao 4.13 gewinnt die Dateigröße. In beiden Versionen nachgemessen: alle vier
   Statussymbole erzeugen jetzt genau eine Größenangabe `16x16`.
 
-## Hinweise
-
-* Die drei SVG-Dateien `gelb.svg`, `gruen.svg` und `rot.svg` (Varianten ohne Rahmen) werden
-  von keiner Stelle im Code referenziert. Falls sie nicht als Reserve gedacht sind, können
-  sie entfallen.
+* ~~Die drei SVG-Dateien `gelb.svg`, `gruen.svg` und `rot.svg` (Varianten ohne Rahmen)
+  werden von keiner Stelle im Code referenziert.~~ Erledigt (4.1.2): entfernt. Über die
+  Git-Historie bleiben sie wiederherstellbar.

@@ -1,5 +1,12 @@
 # Adressen Changelog
 
+## Version 4.1.2 (2026-07-29) - mit Claude Code
+
+* Delete: Die drei ungenutzten Symbole `gelb.svg`, `gruen.svg` und `rot.svg` (Varianten
+  ohne Rahmen) wurden entfernt. Sie waren an keiner Stelle des Bundles eingebunden – die
+  Adressliste verwendet ausschließlich `gruen_rahmen.svg`, `gelb_rahmen.svg`,
+  `rot_rahmen.svg` und `grau.svg`.
+
 ## Version 4.1.1 (2026-07-29) - mit Claude Code
 
 * Fix: Die Statussymbole in der Spalte „Aktiv" der Adressliste wurden viel zu groß
