@@ -128,6 +128,26 @@ gegen Contao 5.7.7) und setzt **PHP 8.1** voraus. Alle Klassen wurden auf
   Bundle-Klasse, dazu `phpunit.xml.dist` und ein Bootstrap, der auch ohne
   `composer install` funktioniert.
 
+## Version 3.1.2 (2026-06-20)
+
+*Nachgetragen am 2026-07-29: Diese Notizen lagen nur in einer unversionierten Arbeitskopie
+unter `F:\Claude\contao-adressen-bundle`. Der beschriebene Code steckt bereits im Commit zu
+3.1.0, es fehlte lediglich die Dokumentation.*
+
+* Fix: `System::import() failed because class "BackendUser" is not a valid class name or does not exist.` beim Bearbeiten eines Adressen-Inhaltselements im Backend. In Contao 5 gibt es die globalen Klassen-Aliase nicht mehr, daher scheitert das unqualifizierte `$this->import('BackendUser', 'User')` im Konstruktor von `tl_content_adresse`. Der Konstruktor wurde komplett entfernt — `$this->User` wurde nirgends genutzt und die Basisklasse `\Contao\Backend` übernimmt die Initialisierung selbst. (Verifiziert in Contao 5.7.7: Klasse instanziiert wieder fehlerfrei.)
+* Note: Die übrigen `$this->import('Database')`-Aufrufe sind **nicht** betroffen, da der Eltern-Konstruktor den Schlüssel `Database` bereits vorbelegt und der erneute Import den Block überspringt. Sie funktionieren weiterhin, sollten für Contao 6 aber auf `\Contao\Database::getInstance()` umgestellt werden. *(Mit 4.0.0 erledigt.)*
+
+## Version 3.1.1 (2026-06-20)
+
+*Ebenfalls am 2026-07-29 aus der Arbeitskopie nachgetragen.*
+
+Beim Integrationstest in einer frischen **Contao 5.7.7** (Symfony 7.4, PHP 8.3.31, MariaDB 10.3.16) entdeckt und behoben:
+
+* Fix: `symfony/dependency-injection: ^6.4` ließ sich nicht mit Contao 5.7 installieren, da diese Symfony **7.4** nutzt. Constraint auf `^6.4 || ^7.0` erweitert.
+* Fix: Den `_instanceof`-Block für `Symfony\Component\DependencyInjection\ContainerAwareInterface` aus der `services.yml` entfernen — dieses Interface wurde in Symfony 7 entfernt und von keinem Service des Bundles genutzt. *(Der Block war im Commit zu 3.1.0 noch enthalten und wurde erst mit 4.0.0 tatsächlich entfernt.)*
+
+Erfolgreich verifiziert: `composer require` (inkl. Auflösung von codefog/contao-haste 5.4.2 und menatwork/contao-multicolumnwizard-bundle 3.6.15), Container-Kompilierung (`cache:clear`), Registrierung beider Cronjobs (`contao:cron:list` zeigt `adressen_extrahieren` = @daily und `adressen_kontrollieren` = `0 4 1 */3 *`) sowie `contao:migrate` (legt `tl_adressen` und `tl_adressen_categories` fehlerfrei an).
+
 ## Version 3.1.0 (2026-06-20) - mit Claude Code
 
 * Change: Die beiden veralteten Standalone-Skripte `extract.php` und `check.php` wurden als echte Contao-5-Cronjobs neu umgesetzt.
