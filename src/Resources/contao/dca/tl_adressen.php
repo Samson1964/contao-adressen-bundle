@@ -1,5 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
+use Contao\Backend;
+use Contao\Config;
+use Contao\DataContainer;
+use Contao\Database;
+use Contao\DC_Table;
+use Contao\Image;
+use Contao\Input;
+use Contao\StringUtil;
+use Contao\System;
+use Schachbulle\ContaoAdressenBundle\Classes\Funktionen;
+use Schachbulle\ContaoAdressenBundle\ContaoAdressenBundle;
+
 /**
  * Tabelle tl_adressen
  */
@@ -9,7 +29,8 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	// Konfiguration
 	'config' => array
 	(
-		'dataContainer'               => \Contao\DC_Table::class,
+		// Contao 5 erwartet den vollqualifizierten Klassennamen, Contao 4.13 den Kurznamen
+		'dataContainer'               => ContaoAdressenBundle::isContao5() ? DC_Table::class : 'Table',
 		'enableVersioning'            => true,
 		'markAsCopy'                  => 'nachname',
 		'sql' => array
@@ -34,9 +55,9 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 	(
 		'sorting' => array
 		(
-			'mode'                    => 2,
+			'mode'                    => 2, // DataContainer::MODE_SORTABLE
 			'fields'                  => array('nachname','vorname'),
-			'flag'                    => 1,
+			'flag'                    => 1, // DataContainer::SORT_INITIAL_LETTER_ASC
 			'defaultSearchField'      => 'nachname',
 			'panelLayout'             => 'adr_filter;filter;sort,search,limit',
 			'panel_callback'          => array('adr_filter' => array('tl_adressen', 'generateAdressenFilter')),
@@ -49,56 +70,13 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'format'                  => '%s',
 			'label_callback'          => array('tl_adressen','addIcon')
 		),
-		'global_operations' => array
-		(
-			'categories' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['categories'],
-				'href'                => 'table=tl_adressen_categories',
-				'primary'             => true,
-				'icon'                => 'bundles/contaoadressen/images/categories.svg',
-				'attributes'          => 'width="16" height="16"'
-			),
-			'import' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['import'],
-				'icon'                => 'bundles/contaoadressen/images/importCSV.svg',
-				'primary'             => false,
-				'href'                => 'key=import',
-				'class'               => 'header_csv_import',
-				'attributes'          => 'width="16" height="16"'
-			),
-			'export' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['export'],
-				'icon'                => 'bundles/contaoadressen/images/exportCSV.svg',
-				'primary'             => false,
-				'href'                => 'key=export',
-				'class'               => 'header_csv_export',
-				'attributes'          => 'width="16" height="16"'
-			),
-			'!all'
-		),
-		'operations' => array
-		(
-			'!edit',
-			'!copy',
-			'!delete',
-			'toggle' => array
-			(
-				'href'                => 'act=toggle&amp;field=aktiv',
-				'icon'                => 'visible.svg',
-				'primary'             => true,
-				'showInHeader'        => true
-			),
-			'!show'
-		)
+		// global_operations und operations werden weiter unten versionsabhängig gesetzt
 	),
 
 	// Paletten
 	'palettes' => array
 	(
-		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,instagram,skype,whatsapp,threema,telegram,irc;{image_legend:hide},singleSRC;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv;{publish_legend},published'
+		'default'                     => '{person_legende},nachname,vorname,titel,firma,club;{adresse_legende:hide},plz,ort,ort_view,strasse,strasse_view;{telefon_legende:hide},telefon1,telefon2,telefon3,telefon4,telefon_view;{telefax_legende:hide},telefax1,telefax2,telefax_view;{email_legende:hide},email1,email2,email3,email4,email5,email6,email_view;{bank_legend},inhaber,iban,bic;{funktionen_legende:hide},wertungsreferent,funktionen;{web_legende:hide},homepage,facebook,twitter,instagram,skype,whatsapp,threema,telegram,irc;{image_legend:hide},singleSRC;{text_legende:hide},text;{info_legende:hide},info,links,source;{aktiv_legende},aktiv'
 	),
 
 	// Felder
@@ -175,10 +153,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'default'                 => true,
 			'inputType'               => 'checkbox',
-			'eval'                    => array
-			(
-				'tl_class'            => 'w50'
-			),
+			'eval'                    => array('tl_class'=>'w50'),
 			'sql'                     => "char(1) NOT NULL default '1'"
 		),
 		'plz' => array
@@ -241,7 +216,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'filter'                  => true,
 			'inputType'               => 'checkboxWizard',
-			'options_callback'        => array('Schachbulle\ContaoAdressenBundle\Classes\Funktionen', 'getFunktionen'),
+			'options_callback'        => array(Funktionen::class, 'getFunktionen'),
 			'eval'                    => array('tl_class'=>'w50', 'multiple'=>true),
 			'sql'                     => "text NULL"
 		),
@@ -251,10 +226,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'default'                 => true,
 			'inputType'               => 'checkbox',
-			'eval'                    => array
-			(
-				'tl_class'            => 'w50'
-			),
+			'eval'                    => array('tl_class'=>'w50'),
 			'sql'                     => "char(1) NOT NULL default '1'"
 		),
 		'telefon1' => array
@@ -307,10 +279,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'default'                 => true,
 			'inputType'               => 'checkbox',
-			'eval'                    => array
-			(
-				'tl_class'            => 'w50'
-			),
+			'eval'                    => array('tl_class'=>'w50'),
 			'sql'                     => "char(1) NOT NULL default '1'"
 		),
 		'telefax1' => array
@@ -341,10 +310,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'default'                 => true,
 			'inputType'               => 'checkbox',
-			'eval'                    => array
-			(
-				'tl_class'            => 'w50'
-			),
+			'eval'                    => array('tl_class'=>'w50'),
 			'sql'                     => "char(1) NOT NULL default '1'"
 		),
 		'email1' => array
@@ -432,8 +398,8 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'sorting'                 => true,
 			'flag'                    => 1,
 			'search'                  => true,
-			'eval'                    => array('mandatory'=>false, 'maxlength'=>22, 'tl_class'=>'w50 clr'),
-			'sql'                     => "varchar(22) NOT NULL default ''"
+			'eval'                    => array('mandatory'=>false, 'maxlength'=>34, 'rgxp'=>'alnum', 'nospace'=>true, 'tl_class'=>'w50 clr'),
+			'sql'                     => "varchar(34) NOT NULL default ''"
 		),
 		'bic' => array
 		(
@@ -443,7 +409,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'sorting'                 => true,
 			'flag'                    => 1,
 			'search'                  => true,
-			'eval'                    => array('mandatory'=>false, 'maxlength'=>11, 'tl_class'=>'w50'),
+			'eval'                    => array('mandatory'=>false, 'maxlength'=>11, 'rgxp'=>'alnum', 'nospace'=>true, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(11) NOT NULL default ''"
 		),
 		'homepage' => array
@@ -453,7 +419,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'exclude'                 => true,
 			'sorting'                 => true,
 			'flag'                    => 1,
-			'default'                 => 'http://',
+			'default'                 => 'https://',
 			'save_callback'           => array
 			(
 				array('tl_adressen', 'saveHomepage')
@@ -550,18 +516,6 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>255, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(255) NOT NULL default ''"
 		),
-		'addImage' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['addImage'],
-			'exclude'                 => true,
-			'inputType'               => 'checkbox',
-			'eval'                    => array
-			(
-				'submitOnChange'      => true,
-				'tl_class'            => 'w50'
-			),
-			'sql'                     => "char(1) NOT NULL default ''"
-		),
 		'singleSRC' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['singleSRC'],
@@ -570,7 +524,7 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array
 			(
 				'filesOnly'           => true,
-				'extensions'          => \Contao\Config::get('validImageTypes'),
+				'extensions'          => Config::get('validImageTypes'),
 				'fieldType'           => 'radio',
 				'mandatory'           => false
 			),
@@ -613,30 +567,10 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'toggle'                  => true,
 			'exclude'                 => true,
 			'filter'                  => true,
-			'flag'                    => \Contao\DataContainer::SORT_INITIAL_LETTER_ASC,
+			'flag'                    => 1, // DataContainer::SORT_INITIAL_LETTER_ASC
 			'inputType'               => 'checkbox',
 			'eval'                    => array('doNotCopy'=>true),
 			'sql'                     => array('type' => 'boolean', 'default' => true)
-		),
-		'prozentx' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['prozentx'],
-			'exclude'                 => true,
-			'default'                 => 50,
-			'inputType'               => 'select',
-			'options'                 => $GLOBALS['TL_ADRESSEN'],
-			'eval'                    => array('tl_class'=>'w50'),
-			'sql'                     => "int(3) unsigned NOT NULL default '0'"
-		),
-		'prozenty' => array
-		(
-			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['prozenty'],
-			'exclude'                 => true,
-			'default'                 => 50,
-			'inputType'               => 'select',
-			'options'                 => $GLOBALS['TL_ADRESSEN'],
-			'eval'                    => array('tl_class'=>'w50'),
-			'sql'                     => "int(3) unsigned NOT NULL default '0'"
 		),
 		'source' => array
 		(
@@ -650,295 +584,417 @@ $GLOBALS['TL_DCA']['tl_adressen'] = array
 			'eval'                    => array('mandatory'=>false, 'maxlength'=>64, 'tl_class'=>'w50'),
 			'sql'                     => "varchar(64) NOT NULL default ''"
 		),
-		// Feld, das alle Strings enthält, die durchsucht werden können
+		// Feld, das alle Strings enthält, die durchsucht werden können.
+		// Wird ausschließlich von tl_adressen::generateSearchstring befüllt und
+		// taucht deshalb in keiner Palette auf.
 		'searchstring' => array
 		(
 			'label'                   => &$GLOBALS['TL_LANG']['tl_adressen']['searchstring'],
-			'inputType'               => 'textarea',
 			'sql'                     => "text NULL"
 		),
 	)
 );
 
-/**
- * Class tl_member_aktivicon
+/*
+ * Operationen versionsabhängig setzen: Contao 5 kennt die Kurzschreibweise
+ * ("edit", "!all"), Contao 4.13 benötigt vollständige Arrays.
  */
-class tl_adressen extends \Contao\Backend
+if (ContaoAdressenBundle::isContao5())
 {
-	var $adressensuche = array();
+	$GLOBALS['TL_DCA']['tl_adressen']['list']['global_operations'] = array
+	(
+		'categories' => array
+		(
+			'href'                => 'table=tl_adressen_categories',
+			'primary'             => true,
+			'icon'                => 'bundles/contaoadressen/images/categories.svg',
+		),
+		'import' => array
+		(
+			'href'                => 'key=import',
+			'icon'                => 'bundles/contaoadressen/images/importCSV.svg',
+			'class'               => 'header_csv_import',
+		),
+		'export' => array
+		(
+			'href'                => 'key=export',
+			'icon'                => 'bundles/contaoadressen/images/exportCSV.svg',
+			'class'               => 'header_csv_export',
+		),
+		'all'
+	);
 
-    /**
-     * Add an image to each record
-     * @param array
-     * @param string
-     * @param DataContainer
-     * @param array
-     * @return string
-     */
-	public function addIcon($row, $label, \Contao\DataContainer $dc, $args)
+	$GLOBALS['TL_DCA']['tl_adressen']['list']['operations'] = array
+	(
+		'edit',
+		'copy',
+		'delete',
+		'toggle',
+		'show'
+	);
+}
+else
+{
+	$GLOBALS['TL_DCA']['tl_adressen']['list']['global_operations'] = array
+	(
+		'categories' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['categories'],
+			'href'                => 'table=tl_adressen_categories',
+			'icon'                => 'bundles/contaoadressen/images/categories.svg',
+			'attributes'          => 'onclick="Backend.getScrollOffset()"'
+		),
+		'import' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['import'],
+			'href'                => 'key=import',
+			'icon'                => 'bundles/contaoadressen/images/importCSV.svg',
+			'class'               => 'header_csv_import',
+			'attributes'          => 'onclick="Backend.getScrollOffset()"'
+		),
+		'export' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['export'],
+			'href'                => 'key=export',
+			'icon'                => 'bundles/contaoadressen/images/exportCSV.svg',
+			'class'               => 'header_csv_export',
+			'attributes'          => 'onclick="Backend.getScrollOffset()"'
+		),
+		'all' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['MSC']['all'],
+			'href'                => 'act=select',
+			'class'               => 'header_edit_all',
+			'attributes'          => 'onclick="Backend.getScrollOffset()" accesskey="e"'
+		)
+	);
+
+	$GLOBALS['TL_DCA']['tl_adressen']['list']['operations'] = array
+	(
+		'edit' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['edit'],
+			'href'                => 'act=edit',
+			'icon'                => 'edit.svg'
+		),
+		'copy' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['copy'],
+			'href'                => 'act=copy',
+			'icon'                => 'copy.svg'
+		),
+		'delete' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['delete'],
+			'href'                => 'act=delete',
+			'icon'                => 'delete.svg',
+			'attributes'          => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '').'\'))return false;Backend.getScrollOffset()"'
+		),
+		'toggle' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['toggle'],
+			'href'                => 'act=toggle&amp;field=aktiv',
+			'icon'                => 'visible.svg'
+		),
+		'show' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen']['show'],
+			'href'                => 'act=show',
+			'icon'                => 'show.svg'
+		)
+	);
+}
+
+/**
+ * Callback-Klasse für tl_adressen
+ */
+class tl_adressen extends Backend
+{
+	/**
+	 * Sammelt beim Doppel-Filter alle E-Mail-Adressen mit den zugehörigen
+	 * Datensatz-IDs: [E-Mail => [ID, ID, ...]]
+	 *
+	 * @var array<string, list<int>>
+	 */
+	private array $adressensuche = array();
+
+	/**
+	 * Ersetzt die Spalte "aktiv" in der Listenansicht durch ein Statussymbol.
+	 *
+	 * @param array<string, mixed> $row
+	 * @param string               $label
+	 * @param array<int, string>   $args
+	 *
+	 * @return array<int, string>
+	 */
+	public function addIcon($row, $label, DataContainer $dc, $args)
 	{
-		// Anzahl Einbindungen feststellen und Singular/Plural zuweisen
-		$seiten = count(explode("\n",(string) ($row['links'] ?? '')))-1;
-		($seiten == 1) ? ($wort = 'Seite') : ($wort = 'Seiten');
+		// Anzahl der Einbindungen feststellen (jede URL steht in einer eigenen Zeile)
+		$arrLinks = array_filter(array_map('trim', explode("\n", (string) ($row['links'] ?? ''))));
+		$seiten   = \count($arrLinks);
+		$wort     = ($seiten == 1) ? 'Seite' : 'Seiten';
+		$aktiv    = (bool) ($row['aktiv'] ?? false);
 
-		if(!$row['aktiv'])
+		if ($aktiv && $seiten)
 		{
-			// Adresse deaktiviert
-			$icon = 'bundles/contaoadressen/images/grau.svg';
-			$title = 'Adresse deaktiviert';
-		}
-		elseif($row['aktiv'] && $row['links'])
-		{
-			// Adresse aktiv, ein oder mehrere Einbindungen
-			$icon = 'bundles/contaoadressen/images/gruen_rahmen.svg';
+			// Adresse aktiv, eine oder mehrere Einbindungen
+			$icon  = 'bundles/contaoadressen/images/gruen_rahmen.svg';
 			$title = 'Adresse eingebunden auf '.$seiten.' '.$wort;
 		}
-		elseif($row['aktiv'])
+		elseif ($aktiv)
 		{
 			// Adresse aktiv, keine Einbindungen
-			$icon = 'bundles/contaoadressen/images/gelb_rahmen.svg';
+			$icon  = 'bundles/contaoadressen/images/gelb_rahmen.svg';
 			$title = 'Adresse aktiv, aber nicht eingebunden';
 		}
-		elseif($row['links'])
+		elseif ($seiten)
 		{
-			// Adresse nicht aktiv, ein oder mehrere Einbindungen
-			$icon = 'bundles/contaoadressen/images/gelb_rahmen.svg';
+			// Adresse nicht aktiv, aber eingebunden – das sollte nicht vorkommen
+			$icon  = 'bundles/contaoadressen/images/rot_rahmen.svg';
 			$title = 'Adresse nicht aktiv, aber auf '.$seiten.' '.$wort.' eingebunden';
 		}
 		else
 		{
-			// Adresse nicht aktiv, keine Einbindungen
-			$icon = 'bundles/contaoadressen/images/rot_rahmen.svg';
-			$title = 'Adresse nicht aktiv und nicht eingebunden';
+			// Adresse nicht aktiv und nicht eingebunden
+			$icon  = 'bundles/contaoadressen/images/grau.svg';
+			$title = 'Adresse deaktiviert';
 		}
 
-		// Spalte 0 (aktiv) in Ausgabe überschreiben
-		$args[0] = '<span><a href="" title="'.$title.'">'.\Contao\Image::getHtml($icon, '', 'width="16" height="16"').'</a></span>';
+		// Spalte 0 (aktiv) in der Ausgabe überschreiben
+		$args[0] = '<span title="'.StringUtil::specialchars($title).'">'.Image::getHtml($icon, $title, 'width="16" height="16"').'</span>';
 
-		// Modifizierte Zeile zurückgeben
 		return $args;
-
-	}
-
-
-	public function saveHomepage($varValue, \Contao\DataContainer $dc)
-	{
-		// Ersetzt http:// wenn nichts dahinter steht
-		if($varValue == 'http://') $varValue = '';
-		return $varValue;
 	}
 
 	/**
-	 * Generiert automatisch ein Alias aus Vorname und Nachname
-	 * @param mixed
-	 * @param \DataContainer
-	 * @return string
-	 * @throws \Exception
+	 * Entfernt einen leeren Protokoll-Platzhalter aus dem Homepage-Feld.
+	 *
+	 * @param mixed $varValue
+	 *
+	 * @return mixed
 	 */
-	public function generateSearchstring(\Contao\DataContainer $dc)
+	public function saveHomepage($varValue, DataContainer $dc)
 	{
-		$temp = $dc->activeRecord->nachname;
-		$temp .= '-'.$dc->activeRecord->vorname;
-		$temp .= '-'.$dc->activeRecord->firma;
-		$temp .= '-'.$dc->activeRecord->plz;
-		$temp .= '-'.$dc->activeRecord->ort;
-		$temp .= '-'.$dc->activeRecord->strasse;
-		$temp .= '-'.$dc->activeRecord->telefon1;
-		$temp .= '-'.$dc->activeRecord->telefon2;
-		$temp .= '-'.$dc->activeRecord->telefon3;
-		$temp .= '-'.$dc->activeRecord->telefon4;
-		$temp .= '-'.$dc->activeRecord->telefax1;
-		$temp .= '-'.$dc->activeRecord->telefax2;
-		$temp .= '-'.$dc->activeRecord->email1;
-		$temp .= '-'.$dc->activeRecord->email2;
-		$temp .= '-'.$dc->activeRecord->email3;
-		$temp .= '-'.$dc->activeRecord->email4;
-		$temp .= '-'.$dc->activeRecord->email5;
-		$temp .= '-'.$dc->activeRecord->email6;
-		$temp .= '-'.$dc->activeRecord->text;
-		$temp .= '-'.$dc->activeRecord->info;
+		$strValue = trim((string) $varValue);
 
-		$temp = \Schachbulle\ContaoAdressenBundle\Classes\Funktionen::generateAlias($temp);
-		\Contao\Database::getInstance()->prepare("UPDATE tl_adressen SET searchstring = ? WHERE id = ?")
-		                               ->execute($temp, $dc->id);
-	}
-
-	/**
-	 * Return the link picker wizard
-	 * @param \DataContainer
-	 * @return string
-	 */
-	public function pagePicker(\Contao\DataContainer $dc)
-	{
-		return ' <a href="contao/page.php?do='.\Contao\Input::get('do').'&amp;table='.$dc->table.'&amp;field='.$dc->field.'&amp;value='.str_replace(array('{{link_url::', '}}'), '', $dc->value).'" onclick="Backend.getScrollOffset();Backend.openModalSelector({\'width\':768,\'title\':\''.\Contao\StringUtil::specialchars(str_replace("'", "\\'", $GLOBALS['TL_LANG']['MOD']['page'][0])).'\',\'url\':this.href,\'id\':\''.$dc->field.'\',\'tag\':\'ctrl_'.$dc->field . ((\Contao\Input::get('act') == 'editAll') ? '_' . $dc->id : '').'\',\'self\':this});return false">' . \Contao\Image::getHtml('pickpage.gif', $GLOBALS['TL_LANG']['MSC']['pagepicker'], 'style="vertical-align:top;cursor:pointer"') . '</a>';
-	}
-
-	public function addAdresse($email, $id)
-	{
-		if($email)
-		{
-			$this->adressensuche[$email][] = $id;
-		}
-	}
-
-	public function getAdressen()
-	{
-		$idArray = array();
-		//echo '<pre>';
-		//print_r($this->adressensuche);
-		//echo '</pre>';
-		$zaehler = 0;
-		foreach($this->adressensuche as $email => $arr)
-		{
-			if(count($arr) > 1)
-			{
-				$zaehler++;
-				foreach($arr as $id)
-				{
-					$idArray[] = $id;
-				}
-			}
-		}
-		//echo "Zähler: $zaehler";
-		//print_r($idArray);
-		return array_unique($idArray);
-	}
-
-	/**
-	 * Generate advanced filter panel and return them as HTML
-	 * @return string
-	 */
-	public static function generateAdressenFilter()
-	{
-		if(\Contao\Input::get('id') > 0) 
+		if ($strValue === 'http://' || $strValue === 'https://')
 		{
 			return '';
 		}
-		
-		$objSession = \Contao\System::getContainer()->get('request_stack')->getSession();
-		$session = $objSession->all();
 
-		// Filter
+		return $strValue;
+	}
+
+	/**
+	 * Baut aus allen durchsuchbaren Feldern einen normalisierten Suchstring und
+	 * legt ihn in tl_adressen.searchstring ab (wird vom Frontend-Suchmodul genutzt).
+	 */
+	public function generateSearchstring(DataContainer $dc): void
+	{
+		if (!$dc->id)
+		{
+			return;
+		}
+
+		$objAdresse = Database::getInstance()
+			->prepare('SELECT * FROM tl_adressen WHERE id = ?')
+			->execute($dc->id);
+
+		if (!$objAdresse->numRows)
+		{
+			return;
+		}
+
+		$arrFelder = array
+		(
+			'nachname', 'vorname', 'firma', 'plz', 'ort', 'strasse',
+			'telefon1', 'telefon2', 'telefon3', 'telefon4',
+			'telefax1', 'telefax2',
+			'email1', 'email2', 'email3', 'email4', 'email5', 'email6',
+			'text', 'info'
+		);
+
+		$arrWerte = array();
+
+		foreach ($arrFelder as $strFeld)
+		{
+			$arrWerte[] = (string) $objAdresse->$strFeld;
+		}
+
+		$strSuchstring = Funktionen::generateAlias(implode('-', $arrWerte));
+
+		Database::getInstance()
+			->prepare('UPDATE tl_adressen SET searchstring = ? WHERE id = ?')
+			->execute($strSuchstring, $dc->id);
+	}
+
+	/**
+	 * Erzeugt das zusätzliche Filterpanel über der Adressliste.
+	 */
+	public function generateAdressenFilter(): string
+	{
+		if (Input::get('id') > 0)
+		{
+			return '';
+		}
+
+		$session = System::getContainer()->get('request_stack')->getSession()->all();
+
 		$arrFilters = array
 		(
 			'adr_filter' => array
 			(
 				'name'    => 'adr_filter',
-				'label'   => $GLOBALS['TL_LANG']['tl_adressen']['filter_extended'],
+				'label'   => $GLOBALS['TL_LANG']['tl_adressen']['filter_extended'] ?? 'Erweiterter Filter',
 				'options' => array
 				(
-					'doubled'  => $GLOBALS['TL_LANG']['tl_adressen']['filter_emaildoubles'],
+					'doubled' => $GLOBALS['TL_LANG']['tl_adressen']['filter_emaildoubles'] ?? 'Doppelte E-Mail-Adressen',
 				)
 			),
 		);
-		
+
 		$strBuffer = '
 <div class="tl_advanced_filter adr_filter tl_subpanel">
-<strong>' . $GLOBALS['TL_LANG']['tl_adressen']['filter'] . '</strong>' . "\n";
+<strong>'.($GLOBALS['TL_LANG']['tl_adressen']['filter'] ?? 'Filter').'</strong>'."\n";
 
-		// Generiere Filter
-		foreach($arrFilters as $arrFilter) 
+		foreach ($arrFilters as $arrFilter)
 		{
+			$strAktiv   = $session['filter']['tl_adressen'][$arrFilter['name']] ?? null;
 			$strOptions = '
-<option value="' . $arrFilter['name'] . '">' . $arrFilter['label'] . '</option>
-<option value="' . $arrFilter['name'] . '">---</option>' . "\n";
+<option value="'.$arrFilter['name'].'">'.$arrFilter['label'].'</option>
+<option value="'.$arrFilter['name'].'">---</option>'."\n";
 
-			// Generiere Optionen
-			foreach($arrFilter['options'] as $k => $v) 
+			foreach ($arrFilter['options'] as $k => $v)
 			{
-				$strOptions .= '<option value="' . $k . '"' . ((($session['filter']['tl_adressen'][$arrFilter['name']] ?? null) === (string) $k) ? ' selected' : '') . '>' . $v . '</option>' . "\n";
+				$strOptions .= '<option value="'.$k.'"'.((string) $strAktiv === (string) $k ? ' selected' : '').'>'.$v.'</option>'."\n";
 			}
 
-			$strBuffer .= '<select name="' . $arrFilter['name'] . '" id="' . $arrFilter['name'] . '" class="tl_select' . (isset($session['filter']['tl_iso_product'][$arrFilter['name']]) ? ' active' : '') . '">
-' . $strOptions . '
-</select>' . "\n";
+			$strBuffer .= '<select name="'.$arrFilter['name'].'" id="'.$arrFilter['name'].'" class="tl_select'.($strAktiv ? ' active' : '').'">
+'.$strOptions.'
+</select>'."\n";
 		}
-		
-		return $strBuffer . '</div>';
+
+		return $strBuffer.'</div>';
 	}
 
 	/**
-	 * Apply advanced filters to product list view
-	 * @return void
+	 * Wertet das zusätzliche Filterpanel aus und schränkt die Listenansicht ein.
 	 */
-	public function applyAdressenFilter()
+	public function applyAdressenFilter(): void
 	{
-		$objSession = \Contao\System::getContainer()->get('request_stack')->getSession();
-		$session = $objSession->all();
-		
-		// Store filter values in the session
-		foreach ($_POST as $k => $v) 
+		$objSession = System::getContainer()->get('request_stack')->getSession();
+		$session    = $objSession->all();
+
+		// Filterwerte aus dem Request in der Session ablegen
+		$blnGeaendert = false;
+
+		foreach (array_keys($_POST) as $k)
 		{
-			if (substr($k, 0, 4) != 'adr_') 
+			if (!\is_string($k) || strncmp($k, 'adr_', 4) !== 0)
 			{
 				continue;
 			}
-			
-			// Reset the filter
-			if ($k == \Contao\Input::post($k)) 
+
+			$varValue = Input::post($k);
+
+			if ($k === $varValue)
 			{
+				// Filter zurücksetzen (der gewählte Wert entspricht dem Namen des Filters)
 				unset($session['filter']['tl_adressen'][$k]);
-			} // Apply the filter
-			else 
-			{
-				$session['filter']['tl_adressen'][$k] = \Contao\Input::post($k);
 			}
+			else
+			{
+				$session['filter']['tl_adressen'][$k] = $varValue;
+			}
+
+			$blnGeaendert = true;
 		}
-		
-		$objSession->replace($session);
-		
-		if (\Contao\Input::get('id') > 0 || !isset($session['filter']['tl_adressen'])) 
+
+		if ($blnGeaendert)
+		{
+			$objSession->replace($session);
+		}
+
+		if (Input::get('id') > 0 || empty($session['filter']['tl_adressen']))
 		{
 			return;
 		}
-		
+
 		$arrAdressen = null;
-		
-		// Filter the products
-		foreach ($session['filter']['tl_adressen'] as $k => $v) 
+
+		foreach ($session['filter']['tl_adressen'] as $k => $v)
 		{
-			if (substr($k, 0, 4) != 'adr_') 
+			if (strncmp((string) $k, 'adr_', 4) !== 0)
 			{
 				continue;
 			}
-			
-			switch ($k) 
+
+			// Adressen mit doppelt vergebenen E-Mail-Adressen anzeigen
+			if ($k === 'adr_filter' && $v === 'doubled')
 			{
-				case 'adr_filter': // Adressen mit doppelten E-Mail-Adressen anzeigen
-					switch ($v) 
-					{
-						case 'doubled': // Adressen mit doppelten E-Mail-Adressen anzeigen
-				
-						$objAdressen = \Contao\Database::getInstance()->prepare("SELECT * FROM tl_adressen")
-						                                              ->execute();
-						if($objAdressen->numRows)
-						{
-							// Alle E-Mail-Adressen in Array mit Verweis auf Datensatz-ID speichern
-							while($objAdressen->next())
-							{
-								self::addAdresse($objAdressen->email1, $objAdressen->id);
-								self::addAdresse($objAdressen->email2, $objAdressen->id);
-								self::addAdresse($objAdressen->email3, $objAdressen->id);
-								self::addAdresse($objAdressen->email4, $objAdressen->id);
-								self::addAdresse($objAdressen->email5, $objAdressen->id);
-								self::addAdresse($objAdressen->email6, $objAdressen->id);
-							}
-						}
-						$arrAdressen = self::getAdressen();
-						//print_r($arrAdressen);
-						break;
-			
-					default:  
-				}
+				$arrAdressen = $this->findeDoppelteAdressen();
 			}
 		}
-		
-		if (\is_array($arrAdressen) && empty($arrAdressen)) 
+
+		if (\is_array($arrAdressen) && empty($arrAdressen))
 		{
+			// Kein Treffer: eine nicht existierende ID erzwingt eine leere Liste
 			$arrAdressen = array(0);
 		}
-		
-		$GLOBALS['TL_DCA']['tl_adressen']['list']['sorting']['root'] = $arrAdressen;
+
+		if ($arrAdressen !== null)
+		{
+			$GLOBALS['TL_DCA']['tl_adressen']['list']['sorting']['root'] = $arrAdressen;
+		}
 	}
 
+	/**
+	 * Liefert die IDs aller Adressen, die sich mindestens eine E-Mail-Adresse
+	 * mit einem anderen Datensatz teilen.
+	 *
+	 * @return list<int>
+	 */
+	private function findeDoppelteAdressen(): array
+	{
+		$this->adressensuche = array();
+
+		$objAdressen = Database::getInstance()
+			->prepare('SELECT id, email1, email2, email3, email4, email5, email6 FROM tl_adressen')
+			->execute();
+
+		while ($objAdressen->next())
+		{
+			for ($i = 1; $i <= 6; $i++)
+			{
+				$this->addAdresse((string) $objAdressen->{'email'.$i}, (int) $objAdressen->id);
+			}
+		}
+
+		$arrIds = array();
+
+		foreach ($this->adressensuche as $arrTreffer)
+		{
+			if (\count($arrTreffer) > 1)
+			{
+				$arrIds = array_merge($arrIds, $arrTreffer);
+			}
+		}
+
+		return array_values(array_unique($arrIds));
+	}
+
+	/**
+	 * Merkt sich eine E-Mail-Adresse mit der zugehörigen Datensatz-ID.
+	 */
+	private function addAdresse(string $strEmail, int $intId): void
+	{
+		$strEmail = strtolower(trim($strEmail));
+
+		if ($strEmail === '')
+		{
+			return;
+		}
+
+		$this->adressensuche[$strEmail][] = $intId;
+	}
 }

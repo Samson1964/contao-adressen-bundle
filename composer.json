@@ -1,7 +1,13 @@
 {
     "name": "schachbulle/contao-adressen-bundle",
     "type": "contao-bundle",
-    "description": "Adressen-Verwaltung für Contao 5",
+    "description": "Adressen-Verwaltung für Contao 4.13 und Contao 5",
+    "keywords": [
+        "contao",
+        "adressen",
+        "kontakte"
+    ],
+    "homepage": "https://github.com/Samson1964/contao-adressen-bundle",
     "license": "LGPL-3.0-or-later",
     "authors": [
         {
@@ -10,11 +16,12 @@
         }
     ],
     "require": {
-        "php": "^8",
-        "contao/core-bundle": "^5",
-        "codefog/contao-haste": "*",
-        "symfony/dependency-injection": "^6.4 || ^7.0",
-        "menatwork/contao-multicolumnwizard-bundle": "*"
+        "php": "^8.1",
+        "contao/core-bundle": "^4.13 || ^5.0",
+        "psr/log": "^1.1 || ^2.0 || ^3.0",
+        "symfony/config": "^5.4 || ^6.4 || ^7.0",
+        "symfony/dependency-injection": "^5.4 || ^6.4 || ^7.0",
+        "symfony/http-kernel": "^5.4 || ^6.4 || ^7.0"
     },
     "conflict": {
         "contao/core": "*",
@@ -22,7 +29,7 @@
     },
     "require-dev": {
         "contao/manager-plugin": "^2.0",
-        "doctrine/doctrine-cache-bundle": "^1.3"
+        "phpunit/phpunit": "^9.5"
     },
     "extra": {
         "contao-manager-plugin": "Schachbulle\\ContaoAdressenBundle\\ContaoManager\\Plugin"
@@ -30,6 +37,11 @@
     "autoload": {
         "psr-4": {
             "Schachbulle\\ContaoAdressenBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Schachbulle\\ContaoAdressenBundle\\Tests\\": "tests/"
         }
     },
     "support": {

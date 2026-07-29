@@ -1,135 +1,88 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
 namespace Schachbulle\ContaoAdressenBundle\Classes;
 
-/**
- * Contao Open Source CMS
- * Copyright (C) 2005-2012 Leo Feyer
- *
- * @link http://www.contao.org
- * @license http://www.gnu.org/licenses/lgpl-3.0.html LGPL
- * 
- * Modul Banner - Check Helper 
- * 
- * PHP version 5
- * @copyright  Glen Langer 2007..2015
- * @author     Glen Langer
- * @package    Banner
- * @license    LGPL
- */
-
+use Contao\Database;
+use Contao\StringUtil;
 
 /**
- * Class BannerCheckHelper
- *
- * @copyright  Glen Langer 2015
- * @author     Glen Langer
- * @package    Banner
+ * Allgemeine Hilfsfunktionen der Adressen-Verwaltung.
  */
-
-class Funktionen extends \Contao\Frontend
+class Funktionen
 {
 	/**
-	 * Current object instance
-	 * @var object
+	 * Führt Contaos generateAlias() aus und ersetzt anschließend evtl.
+	 * verbliebene Umlaute durch ihre ausgeschriebene Form.
+	 *
+	 * Wichtig: Sowohl der in tl_adressen.searchstring abgelegte Suchstring als
+	 * auch der Suchbegriff im Frontend-Suchmodul müssen über diese Methode
+	 * normalisiert werden, sonst passen die Werte nicht zusammen.
 	 */
-	protected static $instance = null;
-
-	var $user;
-
-	/**
-	 * Constructor
-	 */
-	public function __construct()
+	public static function generateAlias(string $strString): string
 	{
-		// Benutzerdaten laden
-		if(\Contao\System::getContainer()->get('contao.security.token_checker')->hasFrontendUser())
+		if ($strString === '')
 		{
-			// Frontenduser eingeloggt
-			$this->user = \Contao\FrontendUser::getInstance();
+			return '';
 		}
-		parent::__construct();
+
+		$arrSearch  = array('Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß');
+		$arrReplace = array('ae', 'oe', 'ue', 'ae', 'oe', 'ue', 'ss');
+
+		return str_replace($arrSearch, $arrReplace, StringUtil::generateAlias($strString));
 	}
 
+	/**
+	 * Liefert alle Kategorien aus tl_adressen_categories als Options-Array.
+	 *
+	 * Wird als options_callback des Feldes tl_adressen.funktionen genutzt.
+	 * Contao übergibt dem Callback den DataContainer – deshalb hat die Methode
+	 * bewusst keine Parameter (überzählige Argumente sind in PHP erlaubt).
+	 *
+	 * @return array<int, string>
+	 */
+	public static function getFunktionen(): array
+	{
+		return self::ladeKategorien(false);
+	}
 
 	/**
-	 * Return the current object instance (Singleton)
-	 * @return BannerCheckHelper
+	 * Liefert nur die aktivierten Kategorien (für das Frontend-Suchmodul).
+	 *
+	 * @return array<int, string>
 	 */
-	public static function getInstance()
+	public static function getAktiveFunktionen(): array
 	{
-		if (self::$instance === null)
+		return self::ladeKategorien(true);
+	}
+
+	/**
+	 * Liest die Kategorien aus der Datenbank.
+	 *
+	 * @return array<int, string>
+	 */
+	private static function ladeKategorien(bool $blnNurAktive): array
+	{
+		$strSql = 'SELECT id, category FROM tl_adressen_categories '
+			.($blnNurAktive ? "WHERE active = '1' " : '')
+			.'ORDER BY category';
+
+		$objResult = Database::getInstance()->prepare($strSql)->execute();
+
+		$arrCategories = array();
+
+		while ($objResult->next())
 		{
-			self::$instance = new \Schachbulle\ContaoAdressenBundle\Classes\Funktionen();
+			$arrCategories[(int) $objResult->id] = (string) $objResult->category;
 		}
-	
-		return self::$instance;
+
+		return $arrCategories;
 	}
-
-
-	/**
-	 * Führt Contao's generateAlias aus und modifiziert ggfs. das Ergebnis
-	 * @param string	String, der geglättet werden soll
-	 * @return			fertiger String
-	 */
-	public static function generateAlias($string)
-	{
-		$string = \Contao\StringUtil::generateAlias($string);
-		$search  = array('Ä', 'Ö', 'Ü', 'ä', 'ö', 'ü', 'ß');
-		$replace = array('ae', 'oe', 'ue', 'ae', 'oe', 'ue', 'ss');
-		return str_replace($search, $replace, $string);
-	}
-
-
-	/**
-	 * Gibt ein Array mit den Funktionen zurück
-	 * @param id	ID in DeWIS
-	 * @return		ID des Contao-Mitgliedes
-	 */
-	public static function getFunktionen($inaktiv = true)
-	{
-		// Kategorien laden (neue Variante)
-		$arrCats = array();
-		$sql = $inaktiv ? '' : 'WHERE active = 1 ';
-		
-		$objResult = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen_categories '.$sql.'ORDER BY category')->execute();
-
-		while($objResult->next())
-		{
-			$arrCats[$objResult->id] = $objResult->category;
-		}
-		return $arrCats;
-
-		// Referate zuordnen (alte Variante)
-		$array = array
-		(
-			'prae'      => 'DSB-Präsidium',
-			'gs'        => 'DSB-Geschäftsstelle',
-			'ha'        => 'DSB-Hauptausschuss',
-			'kaus'      => 'DSB-Kommission Ausbildung',
-			'klsp'      => 'DSB-Kommission Leistungssport',
-			'kfrau'     => 'DSB-Kommission Frauenschach',
-			'ksen'      => 'DSB-Kommission Seniorenschach',
-			'kdwz'      => 'DSB-Wertungskommission',
-			'ksr'       => 'DSB-Schiedsrichterkommission',
-			'bsger'     => 'Bundesschiedsgericht',
-			'kspk'      => 'Bundesspielkommission',
-			'btger'     => 'Bundesturniergericht',
-			'lvprae'    => 'Präsident Landesverband',
-			'ehren'     => 'Ehrenpräsident/-mitglied',
-			'rech'      => 'Rechnungsprüfer',
-			'atrain'    => 'A-Trainerausbildung 2017',
-			'kon17'     => 'Bundeskongress 2017',
-			'kaderm'    => 'Kader männlich',
-			'kaderw'    => 'Kader weiblich',
-			'kaderabm'  => 'Kader A und B männlich',
-			'kaderabw'  => 'Kader A und B weiblich',
-			'kaderacm'  => 'Kader A bis C männlich',
-			'kaderacw'  => 'Kader A bis C weiblich',
-			'kaderalle' => 'Kader A, B, C und D/C männlich und weiblich'
-		);
-		return $array;
-
-	}
-
 }

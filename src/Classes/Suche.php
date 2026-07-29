@@ -1,228 +1,240 @@
 <?php
 
-/**
- * Contao Open Source CMS
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
  *
- * Copyright (c) 2005-2014 Leo Feyer
- *
- * @package   fh-counter
- * @author    Frank Hoppe
- * @license   GNU/LGPL
- * @copyright Frank Hoppe 2014
+ * @license LGPL-3.0-or-later
  */
 
 namespace Schachbulle\ContaoAdressenBundle\Classes;
 
-/**
- * Class CounterRegister
- *
- * @copyright  Frank Hoppe 2014
- * @author     Frank Hoppe
- *
- * Basisklasse vom FH-Counter
- * Erledigt die Zählung der jeweiligen Contenttypen und schreibt die Zählerwerte in $GLOBALS
- */
-class Suche extends \Contao\Module
-{
+use Contao\BackendTemplate;
+use Contao\Database;
+use Contao\Input;
+use Contao\Module;
+use Contao\System;
 
-	var $suchbegriff;
-	var $funktion;
-	var $liteversion;
-	
+/**
+ * Frontend-Modul "Adressensuche"
+ *
+ * Durchsucht das Feld tl_adressen.searchstring, das beim Speichern einer
+ * Adresse aus allen durchsuchbaren Feldern erzeugt wird, und kann zusätzlich
+ * auf Kategorien (tl_adressen.funktionen) einschränken.
+ *
+ * Unterstützte URL-Parameter:
+ *   s=<Suchbegriff>
+ *   funktion[]=<Kategorie-ID>
+ *   join=and|or   – Verknüpfung mehrerer Kategorien
+ *   email=1       – nur E-Mail-Adressen ausgeben (Liteversion)
+ */
+class Suche extends Module
+{
 	/**
 	 * Template
-	 * @var string
 	 */
 	protected $strTemplate = 'adresse_ergebnisse';
-	 
-	/**
-	 * Display a wildcard in the back end
-	 * @return string
-	 */
-	public function generate()
-	{
-		$objScopeMatcher = \Contao\System::getContainer()->get('contao.routing.scope_matcher');
-		$objRequest = \Contao\System::getContainer()->get('request_stack')->getCurrentRequest();
-		if ($objScopeMatcher->isBackendRequest($objRequest))
-		{
-			$objTemplate = new \Contao\BackendTemplate('be_wildcard');
 
-			$objTemplate->wildcard = '### ADRESSENSUCHE ###';
-			$objTemplate->title = $this->name;
-			$objTemplate->id = $this->id;
+	/**
+	 * Suchbegriff aus der URL
+	 */
+	private string $strSuchbegriff = '';
+
+	/**
+	 * Ausgewählte Kategorien
+	 *
+	 * @var list<int>
+	 */
+	private array $arrFunktionen = array();
+
+	/**
+	 * Verknüpfung der Kategorien: AND oder OR
+	 */
+	private string $strVerknuepfung = 'OR';
+
+	/**
+	 * Liteversion: nur E-Mail-Adressen ausgeben
+	 */
+	private bool $blnLiteversion = false;
+
+	/**
+	 * Zeigt im Backend einen Platzhalter an und liest im Frontend die
+	 * URL-Parameter ein.
+	 */
+	public function generate(): string
+	{
+		$objScopeMatcher = System::getContainer()->get('contao.routing.scope_matcher');
+		$objRequest      = System::getContainer()->get('request_stack')->getCurrentRequest();
+
+		if ($objRequest !== null && $objScopeMatcher->isBackendRequest($objRequest))
+		{
+			$objTemplate = new BackendTemplate('be_wildcard');
+
+			$objTemplate->wildcard = '### '.($GLOBALS['TL_LANG']['FMD']['adressen_suche'][0] ?? 'ADRESSENSUCHE').' ###';
+			$objTemplate->title    = $this->name;
+			$objTemplate->id       = $this->id;
+			$objTemplate->link     = $this->name;
 
 			return $objTemplate->parse();
 		}
-		else
-		{
-			// FE-Modus: URL mit allen möglichen Parametern auflösen
-			$this->suchbegriff = trim(strtolower(\Contao\Input::get('s')));
-			$this->funktion = \Contao\Input::get('funktion');
-			$this->linken = strtoupper(\Contao\Input::get('join'));
-			$this->liteversion = strtoupper(\Contao\Input::get('email'));
-		}
-		
-		return parent::generate(); // Weitermachen mit dem Modul
+
+		// URL-Parameter auswerten
+		$this->strSuchbegriff  = trim(self::leseString('s'));
+		$this->arrFunktionen   = self::leseFunktionen();
+		$this->strVerknuepfung = strtoupper(self::leseString('join')) === 'AND' ? 'AND' : 'OR';
+		$this->blnLiteversion  = self::leseString('email') !== '';
+
+		return parent::generate();
 	}
 
 	/**
-	 * Generate the module
+	 * Erzeugt die Ausgabe des Moduls.
 	 */
-	protected function compile()
+	protected function compile(): void
 	{
+		$this->Template->Suchbegriff            = $this->strSuchbegriff;
+		$this->Template->SuchbegriffModifiziert = '';
+		$this->Template->Ergebnisliste          = array();
+		$this->Template->Gesucht                = false;
+		$this->Template->Funktionen             = Funktionen::getAktiveFunktionen();
+		$this->Template->Funktionsauswahl       = $this->arrFunktionen;
+		$this->Template->Verknuepfung           = $this->strVerknuepfung;
+		$this->Template->Liteversion            = $this->blnLiteversion;
 
-		// Funktionsparameter prüfen und anpassen
-		if(!$this->funktion) $this->funktion = array();
-		switch($this->linken)
+		if ($this->strSuchbegriff === '' && !$this->arrFunktionen)
 		{
-			case 'AND':
-				break;
-			case 'OR':
-				break;
-			default:
-				$this->linken = 'OR';
-		}
-		$this->liteversion = $this->liteversion ? true : false;
-		
-		if($this->suchbegriff || $this->funktion)
-		{
-			// Suchbegriff modifizieren
-			$s = '%'.\Contao\StringUtil::generateAlias($this->suchbegriff).'%';
-
-			// Abfrage zusammenbauen je nach Parametern
-			if($this->suchbegriff && !$this->funktion)
-			{
-				// Suchbegriff vorhanden, aber keine Funktion
-				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? ORDER BY nachname ASC, vorname ASC')
-				                                    ->execute($s);
-			}
-			elseif(!$this->suchbegriff && $this->funktion)
-			{
-				// Suchbegriff nicht vorhanden, aber mind. eine Funktion
-				// Funktionen-SQL bauen
-				$sql = '';
-				foreach($this->funktion as $item)
-				{
-					if($sql) $sql .= ' '.$this->linken.' funktionen LIKE ';
-					else $sql .= 'funktionen LIKE ';
-					$sql .= '\'%"'.$item.'"%\'';
-				}
-				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE '.$sql.' ORDER BY nachname ASC, vorname ASC')
-				                                    ->execute();
-			}
-			elseif($this->suchbegriff && $this->funktion)
-			{
-				// Suchbegriff vorhanden und auch mind. eine Funktion
-				// Funktionen-SQL bauen
-				$sql = '';
-				foreach($this->funktion as $item)
-				{
-					if($sql) $sql .= ' '.$this->linken.' funktionen LIKE ';
-					else $sql .= 'funktionen LIKE ';
-					$sql .= '\'%"'.$item.'"%\'';
-				}
-				$objSuche = \Contao\Database::getInstance()->prepare('SELECT * FROM tl_adressen WHERE searchstring LIKE ? AND ('.$sql.') ORDER BY nachname ASC, vorname ASC')
-				                                    ->execute($s);
-			}
-
-			$daten = array();
-			if($objSuche->numRows)
-			{
-				// Datensätze anzeigen
-				while($objSuche->next())
-				{
-					if($objSuche->telefon1 || $objSuche->telefon2 || $objSuche->telefon3 || $objSuche->telefon4) $telefon = true;
-					else $telefon = false;
-					if($objSuche->email1 || $objSuche->email2 || $objSuche->email3 || $objSuche->email4 || $objSuche->email5 || $objSuche->email6) $email = true;
-					else $email = false;
-					$daten[] = array
-					(
-						'nachname'    => $objSuche->nachname,
-						'vorname'     => $objSuche->vorname,
-						'titel'       => $objSuche->titel,
-						'firma'       => $objSuche->firma,
-						'plz'         => $objSuche->plz,
-						'ort'         => $objSuche->ort,
-						'strasse'     => $objSuche->strasse,
-						'email'       => $email,
-						'email1'      => $objSuche->email1,
-						'email2'      => $objSuche->email2,
-						'email3'      => $objSuche->email3,
-						'email4'      => $objSuche->email4,
-						'email5'      => $objSuche->email5,
-						'email6'      => $objSuche->email6,
-						'telefon'     => $telefon,
-						'telefon1'    => $objSuche->telefon1,
-						'telefon2'    => $objSuche->telefon2,
-						'telefon3'    => $objSuche->telefon3,
-						'telefon4'    => $objSuche->telefon4,
-						'telefon1sel' => $this->Telefonlink($objSuche->telefon1),
-						'telefon2sel' => $this->Telefonlink($objSuche->telefon2),
-						'telefon3sel' => $this->Telefonlink($objSuche->telefon3),
-						'telefon4sel' => $this->Telefonlink($objSuche->telefon4),
-						'homepage'    => $objSuche->homepage,
-						'info'        => $objSuche->info,
-						'text'        => $objSuche->text,
-						'deaktiviert' => $objSuche->aktiv ? '' : 'deaktiviert ',
-						'unverlinkt'  => $objSuche->links ? '' : 'unverlinkt ',
-					);
-				}
-			}
-			//print_r($daten);
-			$this->Template->SuchbegriffModifiziert = $s;
-			$this->Template->Ergebnisliste = $daten;
-			$this->Template->Gesucht = true;
-		}
-		else
-		{
-			$this->Template->Gesucht = false;
+			return;
 		}
 
-		// Weitere Templatevariablen
-		$this->Template->Suchbegriff = $this->suchbegriff;
-		$this->Template->Funktionen = \Schachbulle\ContaoAdressenBundle\Classes\Funktionen::getFunktionen(false);
-		$this->Template->Funktionsauswahl = $this->funktion;
-		$this->Template->Verknuepfung = $this->linken;
-		$this->Template->Liteversion = $this->liteversion;
+		$this->Template->Gesucht = true;
 
-		return;
+		[$strWhere, $arrParameter] = $this->baueBedingung();
+
+		$objSuche = Database::getInstance()
+			->prepare('SELECT * FROM tl_adressen WHERE '.$strWhere.' ORDER BY nachname ASC, vorname ASC')
+			->execute(...$arrParameter);
+
+		$arrDaten = array();
+
+		while ($objSuche->next())
+		{
+			$arrTelefon = array();
+			$arrMails   = array();
+
+			for ($i = 1; $i <= 4; $i++)
+			{
+				$arrTelefon['telefon'.$i]    = (string) $objSuche->{'telefon'.$i};
+				$arrTelefon['telefon'.$i.'sel'] = Adressdaten::telefonlink((string) $objSuche->{'telefon'.$i});
+			}
+
+			for ($i = 1; $i <= 6; $i++)
+			{
+				$arrMails['email'.$i] = (string) $objSuche->{'email'.$i};
+			}
+
+			$arrDaten[] = array_merge($arrTelefon, $arrMails, array
+			(
+				'nachname'    => (string) $objSuche->nachname,
+				'vorname'     => (string) $objSuche->vorname,
+				'titel'       => (string) $objSuche->titel,
+				'firma'       => (string) $objSuche->firma,
+				'plz'         => (string) $objSuche->plz,
+				'ort'         => (string) $objSuche->ort,
+				'strasse'     => (string) $objSuche->strasse,
+				'email'       => (bool) array_filter($arrMails),
+				'telefon'     => (bool) array_filter($arrTelefon),
+				'homepage'    => (string) $objSuche->homepage,
+				'info'        => (string) $objSuche->info,
+				'text'        => (string) $objSuche->text,
+				'deaktiviert' => $objSuche->aktiv ? '' : 'deaktiviert ',
+				'unverlinkt'  => $objSuche->links ? '' : 'unverlinkt ',
+			));
+		}
+
+		$this->Template->SuchbegriffModifiziert = Funktionen::generateAlias($this->strSuchbegriff);
+		$this->Template->Ergebnisliste          = $arrDaten;
 	}
 
 	/**
-	 * Konvertiert eine Telefonnummer in einen mobilfähigen Link
-	 * Aus z.B. +43 (0)699 11112222 wird +4369911112222
+	 * Baut die WHERE-Bedingung samt Parametern auf.
+	 *
+	 * Alle Werte werden als Platzhalter übergeben, damit kein Bestandteil der
+	 * URL in das SQL-Statement gelangt.
+	 *
+	 * @return array{0: string, 1: list<string>}
 	 */
-	public function Telefonlink($nummer)
+	private function baueBedingung(): array
 	{
-		$nummer = trim($nummer);
-		if($nummer == '') return $nummer;
-		
-		// Zeichen in ihre ursprüngliche Form umwandeln
-		$nummer = html_entity_decode($nummer);
-		// Sonderzeichen und Buchstaben entfernen
-		$nummer = str_replace('(0)','',$nummer);
-		$nummer = preg_replace('/[^0-9]/','',$nummer);
-		// Prüfen auf führende 0
-		if(substr($nummer,0,1) == '0')
+		$arrBedingungen = array();
+		$arrParameter   = array();
+
+		if ($this->strSuchbegriff !== '')
 		{
-			// Prüfen auf 0 an zweiter Stelle
-			if(substr($nummer,0,2) == '0')
-			{
-				// Durch + ersetzen
-				$nummer = '+'.substr($nummer,2);
-			}
-			else
-			{
-				// Durch +49 ersetzen
-				$nummer = '+49'.substr($nummer,1);
-			}
+			$arrBedingungen[] = 'searchstring LIKE ?';
+			$arrParameter[]   = '%'.Funktionen::generateAlias($this->strSuchbegriff).'%';
 		}
-		else
+
+		if ($this->arrFunktionen)
 		{
-			// Keine 0 am Anfang, dann wohl Ländervorwahl
-			$nummer = '+'.$nummer;
+			$arrFunktionsBedingungen = array();
+
+			foreach ($this->arrFunktionen as $intFunktion)
+			{
+				$arrFunktionsBedingungen[] = 'funktionen LIKE ?';
+				// Die Kategorien liegen serialisiert vor, z.B. a:1:{i:0;s:2:"12";}
+				$arrParameter[] = '%"'.$intFunktion.'"%';
+			}
+
+			$arrBedingungen[] = '('.implode(' '.$this->strVerknuepfung.' ', $arrFunktionsBedingungen).')';
 		}
-		return $nummer;
+
+		return array(implode(' AND ', $arrBedingungen), $arrParameter);
 	}
 
+	/**
+	 * Liest einen skalaren URL-Parameter aus.
+	 *
+	 * Übergibt jemand den Parameter als Array (z.B. ?s[]=x), wird ein leerer
+	 * String zurückgegeben statt eine "Array to string conversion"-Warnung
+	 * auszulösen.
+	 */
+	private static function leseString(string $strName): string
+	{
+		$varWert = Input::get($strName);
+
+		return \is_scalar($varWert) ? (string) $varWert : '';
+	}
+
+	/**
+	 * Liest den Parameter funktion[] aus der URL und lässt nur ganze Zahlen zu.
+	 *
+	 * @return list<int>
+	 */
+	private static function leseFunktionen(): array
+	{
+		$varFunktionen = Input::get('funktion');
+
+		if ($varFunktionen === null || $varFunktionen === '')
+		{
+			return array();
+		}
+
+		if (!\is_array($varFunktionen))
+		{
+			$varFunktionen = array($varFunktionen);
+		}
+
+		$arrFunktionen = array();
+
+		foreach ($varFunktionen as $varFunktion)
+		{
+			if (\is_scalar($varFunktion) && (int) $varFunktion > 0)
+			{
+				$arrFunktionen[] = (int) $varFunktion;
+			}
+		}
+
+		return array_values(array_unique($arrFunktionen));
+	}
 }

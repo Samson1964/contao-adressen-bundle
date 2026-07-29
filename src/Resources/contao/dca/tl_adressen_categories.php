@@ -1,45 +1,49 @@
 <?php
 
-/**
- * Contao Open Source CMS
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
  *
- * Copyright (c) 2005-2014 Leo Feyer
- *
- * @package News
- * @link    https://contao.org
- * @license http://www.gnu.org/licenses/lgpl-3.0.html LGPL
+ * @license LGPL-3.0-or-later
  */
 
+use Contao\DC_Table;
+use Schachbulle\ContaoAdressenBundle\ContaoAdressenBundle;
 
 /**
- * Table tl_adressen_categories
+ * Tabelle tl_adressen_categories
+ *
+ * Kategorien, die einer Adresse im Feld tl_adressen.funktionen zugewiesen
+ * werden können.
  */
 $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 (
 
-	// Config
+	// Konfiguration
 	'config' => array
 	(
-		'dataContainer'               => \Contao\DC_Table::class,
+		// Contao 5 erwartet den vollqualifizierten Klassennamen, Contao 4.13 den Kurznamen
+		'dataContainer'               => ContaoAdressenBundle::isContao5() ? DC_Table::class : 'Table',
 		'switchToEdit'                => true,
 		'enableVersioning'            => true,
 		'sql' => array
 		(
 			'keys' => array
 			(
-				'id'                 => 'primary',
+				'id'                  => 'primary',
 			)
 		)
 	),
 
-	// List
+	// Datensätze auflisten
 	'list' => array
 	(
 		'sorting' => array
 		(
-			'mode'                    => 2,
+			'mode'                    => 2, // DataContainer::MODE_SORTABLE
 			'fields'                  => array('category'),
-			'flag'                    => 1,
+			'flag'                    => 1, // DataContainer::SORT_INITIAL_LETTER_ASC
 			'defaultSearchField'      => 'category',
 			'panelLayout'             => 'filter,sort;search,limit',
 		),
@@ -47,40 +51,17 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 		(
 			'fields'                  => array('category'),
 			'format'                  => '%s',
-			//'label_callback'          => array('tl_adressen_categories', 'addPublishedType'),
 		),
-		'global_operations' => array
-		(
-			'adressen' => array
-			(
-				'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['adressen'],
-				'href'                => 'table=tl_adressen',
-				'primary'             => true,
-				'icon'                => 'bundles/contaoadressen/images/icon.svg',
-				'attributes'          => 'onclick="Backend.getScrollOffset();"'
-			),
-			'!all'
-		),
-		'operations' => array
-		(
-			'!edit',
-			'toggle' => array
-			(
-				'href'                => 'act=toggle&amp;field=active',
-				'icon'                => 'visible.svg',
-				'primary'             => true,
-			),
-			'!show'
-		)
+		// global_operations und operations werden weiter unten versionsabhängig gesetzt
 	),
 
-	// Palettes
+	// Paletten
 	'palettes' => array
 	(
 		'default'                     => '{name_legend},category;{active_legend},active'
 	),
 
-	// Fields
+	// Felder
 	'fields' => array
 	(
 		'id' => array
@@ -97,7 +78,7 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 			'exclude'                 => true,
 			'search'                  => true,
 			'inputType'               => 'text',
-			'eval'                    => array('mandatory'=>false, 'maxlength'=>64, 'tl_class'=>'long'),
+			'eval'                    => array('mandatory'=>true, 'maxlength'=>64, 'tl_class'=>'long'),
 			'sql'                     => "varchar(64) NOT NULL default ''"
 		),
 		'active' => array
@@ -106,7 +87,7 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 			'toggle'                  => true,
 			'exclude'                 => true,
 			'filter'                  => true,
-			'flag'                    => \Contao\DataContainer::SORT_INITIAL_LETTER_ASC,
+			'flag'                    => 1, // DataContainer::SORT_INITIAL_LETTER_ASC
 			'inputType'               => 'checkbox',
 			'eval'                    => array('doNotCopy'=>true, 'tl_class' => 'w50'),
 			'sql'                     => array('type' => 'boolean', 'default' => true)
@@ -114,24 +95,77 @@ $GLOBALS['TL_DCA']['tl_adressen_categories'] = array
 	)
 );
 
-
-/**
- * Class tl_adressen_categories
- *
- * Provide miscellaneous methods that are used by the data configuration array.
- * @copyright  Leo Feyer 2005-2014
- * @author     Leo Feyer <https://contao.org>
- * @package    News
+/*
+ * Operationen versionsabhängig setzen: Contao 5 kennt die Kurzschreibweise,
+ * Contao 4.13 benötigt vollständige Arrays.
  */
-class tl_adressen_categories extends \Contao\Backend
+if (ContaoAdressenBundle::isContao5())
 {
+	$GLOBALS['TL_DCA']['tl_adressen_categories']['list']['global_operations'] = array
+	(
+		'adressen' => array
+		(
+			'href'                => 'table=tl_adressen',
+			'primary'             => true,
+			'icon'                => 'bundles/contaoadressen/images/icon.svg',
+		),
+		'all'
+	);
 
-	public function addPublishedType($row, $label, \Contao\DataContainer $dc, $args)
-	{
-		$css = $row['active'] ? 'published' : 'unpublished';
+	$GLOBALS['TL_DCA']['tl_adressen_categories']['list']['operations'] = array
+	(
+		'edit',
+		'delete',
+		'toggle',
+		'show'
+	);
+}
+else
+{
+	$GLOBALS['TL_DCA']['tl_adressen_categories']['list']['global_operations'] = array
+	(
+		'adressen' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['adressen'],
+			'href'                => 'table=tl_adressen',
+			'icon'                => 'bundles/contaoadressen/images/icon.svg',
+			'attributes'          => 'onclick="Backend.getScrollOffset()"'
+		),
+		'all' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['MSC']['all'],
+			'href'                => 'act=select',
+			'class'               => 'header_edit_all',
+			'attributes'          => 'onclick="Backend.getScrollOffset()" accesskey="e"'
+		)
+	);
 
-		$args[0] = '<span class="'.$css.'">'.$args[0].'</span>';
-		//$args[1] = $args[1] . '<a href="' . $row['fileLink'] . '"><img src="path/to/icon.png"></a>'; // $args holds an array to your fields and their values. In my case $args[1] refers to the 'fileName' column
-		return $args;
-	}
+	$GLOBALS['TL_DCA']['tl_adressen_categories']['list']['operations'] = array
+	(
+		'edit' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['edit'],
+			'href'                => 'act=edit',
+			'icon'                => 'edit.svg'
+		),
+		'delete' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['delete'],
+			'href'                => 'act=delete',
+			'icon'                => 'delete.svg',
+			'attributes'          => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? '').'\'))return false;Backend.getScrollOffset()"'
+		),
+		'toggle' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['toggle'],
+			'href'                => 'act=toggle&amp;field=active',
+			'icon'                => 'visible.svg'
+		),
+		'show' => array
+		(
+			'label'               => &$GLOBALS['TL_LANG']['tl_adressen_categories']['show'],
+			'href'                => 'act=show',
+			'icon'                => 'show.svg'
+		)
+	);
 }

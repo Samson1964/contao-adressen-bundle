@@ -1,25 +1,27 @@
 <?php
 
-/**
- * Contao Open Source CMS
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
  *
- * Copyright (C) 2005-2013 Leo Feyer
- *
- * @package   fen
- * @author    Frank Hoppe
- * @license   GNU/LGPL
- * @copyright Frank Hoppe 2013
+ * @license LGPL-3.0-or-later
  */
 
-/**
- * palettes
+use Contao\BackendUser;
+use Contao\System;
+
+/*
+ * Palette erweitern
+ *
+ * Hinweis: tl_settings wird über DC_File in die localconfig geschrieben, die
+ * Felder brauchen deshalb keine "sql"-Definition.
  */
 $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{adressen_legend:hide},adressen_defaultImage,adressen_ImageSize';
 
-/**
- * fields
+/*
+ * Felder
  */
-
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_defaultImage'] = array
 (
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_defaultImage'],
@@ -39,9 +41,8 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_ImageSize'] = array
 	'inputType'               => 'imageSize',
 	'reference'               => &$GLOBALS['TL_LANG']['MSC'],
 	'eval'                    => array('rgxp'=>'natural', 'includeBlankOption'=>true, 'nospace'=>true, 'helpwizard'=>true, 'tl_class'=>'w50'),
-	'options_callback' => static function ()
+	'options_callback'        => static function ()
 	{
-		return \Contao\System::getContainer()->get('contao.image.sizes')->getOptionsForUser(\Contao\BackendUser::getInstance());
-	},
-	'sql'                     => "varchar(255) NOT NULL default ''"
+		return System::getContainer()->get('contao.image.sizes')->getOptionsForUser(BackendUser::getInstance());
+	}
 );

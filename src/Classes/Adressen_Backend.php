@@ -1,214 +1,295 @@
 <?php
 
-namespace Schachbulle\ContaoAdressenBundle\Classes;
+declare(strict_types=1);
 
 /*
- * Ersetzt den Tag {{adresse::ID}} bzw. {{adresse::ID::Funktion}}
- * durch die entsprechende Adresse aus tl_adressen
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
  */
 
-class Adressen_Backend extends \Contao\Backend
-{
+namespace Schachbulle\ContaoAdressenBundle\Classes;
 
-	public function exportAdressen(\Contao\DataContainer $dc)
+use Contao\Backend;
+use Contao\Config;
+use Contao\Database;
+use Contao\DataContainer;
+use Contao\Environment;
+use Contao\File;
+use Contao\FileUpload;
+use Contao\Input;
+use Contao\Message;
+use Contao\StringUtil;
+use Contao\System;
+
+/**
+ * CSV-Import und CSV-Export der Adressen im Backend.
+ */
+class Adressen_Backend extends Backend
+{
+	/**
+	 * Exportiert alle Adressen als CSV-Datei.
+	 *
+	 * @return string Leerer String, wenn der Export nicht angefordert wurde
+	 *                (die Methode beendet das Skript sonst selbst)
+	 */
+	public function exportAdressen(DataContainer $dc): string
 	{
-		if(\Contao\Input::get('key') != 'export')
+		if (Input::get('key') !== 'export')
 		{
-			// Export-Befehl fehlt
 			return '';
 		}
 
-		// Datensätze laden
-		$arrExport = array();
-		$objRow = $this->Database->prepare("SELECT * FROM tl_adressen ORDER BY nachname,vorname,titel")->execute($dc->id);
+		$objRow = Database::getInstance()
+			->prepare('SELECT * FROM tl_adressen ORDER BY nachname, vorname, titel')
+			->execute();
 
-		while($objRow->next())
+		if (!$objRow->numRows)
 		{
-			$arrExport[] = $objRow->row();
+			Message::addError('Es sind keine Adressen vorhanden.');
+			$this->redirect(str_replace('&key=export', '', Environment::get('request')));
 		}
 
-		// Ausgabe
-		$exportFile =  'Adressen-Export_' . date("Ymd-Hi");
+		$strDatei = 'Adressen-Export_'.date('Ymd-Hi').'.csv';
 
-		header('Content-Type: application/csv');
+		header('Content-Type: text/csv; charset=utf-8');
 		header('Content-Transfer-Encoding: binary');
-		header('Content-Disposition: attachment; filename="' . $exportFile .'.csv"');
+		header('Content-Disposition: attachment; filename="'.$strDatei.'"');
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 		header('Pragma: public');
 		header('Expires: 0');
 
-		// Dateihandle für Direktstream öffnen
-		$fp = fopen("php://output",'w');
-		$array = array();
+		$resHandle = fopen('php://output', 'w');
 
-		// Kopf ausgeben
-		foreach($arrExport[0] as $key => $value)
-		{
-			$array[] = $key;
-		}
-		fputcsv($fp,$array);
+		$blnKopfzeile = true;
 
-		// Daten ausgeben
-		for($x=0;$x<count($arrExport);$x++)
+		while ($objRow->next())
 		{
-			$array = array();
-			foreach($arrExport[$x] as $key => $value)
+			$arrZeile = $objRow->row();
+
+			if ($blnKopfzeile)
 			{
-				$array[] = $value;
+				fputcsv($resHandle, array_keys($arrZeile));
+				$blnKopfzeile = false;
 			}
-			fputcsv($fp,$array);
+
+			fputcsv($resHandle, array_map(
+				static fn ($varWert): string => \is_scalar($varWert) ? (string) $varWert : '',
+				$arrZeile
+			));
 		}
-		fclose($fp);
+
+		fclose($resHandle);
 		exit;
-		
 	}
 
-	public function importAdressen(\Contao\DataContainer $dc)
+	/**
+	 * Importiert Adressen aus einer CSV-Datei.
+	 *
+	 * Die erste Zeile der Datei muss die Spaltennamen enthalten. Es werden
+	 * ausschließlich Spalten übernommen, die in der DCA von tl_adressen
+	 * definiert sind – so kann über die Datei kein beliebiges SQL eingeschleust
+	 * werden.
+	 */
+	public function importAdressen(DataContainer $dc): string
 	{
-		if(\Contao\Input::get('key') != 'import')
+		if (Input::get('key') !== 'import')
 		{
-			// Beenden, wenn der Parameter nicht übereinstimmt
 			return '';
 		}
 
-		// Datei-Upload-Widget instanzieren (Contao 5)
-		$objUploader = new \Contao\FileUpload();
+		$objUploader = new FileUpload();
 
-		// Formular wurde abgeschickt, CSS-Datei importieren
-		if (\Contao\Input::post('FORM_SUBMIT') == 'tl_table_import')
+		if (Input::post('FORM_SUBMIT') === 'tl_table_import')
 		{
-			$arrUploaded = $objUploader->uploadTo('system/tmp');
+			$this->verarbeiteUpload($objUploader, $dc->table);
+		}
 
-			if(empty($arrUploaded))
+		return $this->erzeugeFormular($objUploader);
+	}
+
+	/**
+	 * Liest die hochgeladenen Dateien ein und schreibt sie in die Datenbank.
+	 */
+	private function verarbeiteUpload(FileUpload $objUploader, string $strTable): void
+	{
+		$arrUploaded = $objUploader->uploadTo('system/tmp');
+
+		if (empty($arrUploaded))
+		{
+			Message::addError($GLOBALS['TL_LANG']['ERR']['all_fields'] ?? 'Bitte wählen Sie eine Datei aus.');
+			$this->reload();
+		}
+
+		$arrErlaubteSpalten = array_keys($GLOBALS['TL_DCA'][$strTable]['fields'] ?? array());
+		$strSeparator       = self::getSeparator();
+
+		foreach ($arrUploaded as $strCsvFile)
+		{
+			$objFile = new File($strCsvFile);
+
+			if ($objFile->extension !== 'csv')
 			{
-				\Contao\Message::addError($GLOBALS['TL_LANG']['ERR']['all_fields']);
-				$this->reload();
+				Message::addError(sprintf($GLOBALS['TL_LANG']['ERR']['filetype'] ?? 'Dateityp "%s" wird nicht unterstützt.', $objFile->extension));
+				continue;
 			}
 
-			$this->import('Database');
+			$arrTabelle = array();
+			$resFile    = $objFile->handle;
 
-			foreach ($arrUploaded as $strCsvFile)
+			while (($arrZeile = fgetcsv($resFile, 0, $strSeparator)) !== false)
 			{
-				$objFile = new \Contao\File($strCsvFile);
-				$arrTable = array();
+				$arrTabelle[] = $arrZeile;
+			}
 
-				if ($objFile->extension != 'csv')
+			if (\count($arrTabelle) < 2)
+			{
+				Message::addError($objFile->name.' enthält keine Datensätze.');
+				continue;
+			}
+
+			$this->importiereTabelle($objFile->name, $arrTabelle, $arrErlaubteSpalten, $strTable);
+		}
+
+		// Zur Adressliste zurückkehren (key=import aus der URL entfernen)
+		System::setCookie('BE_PAGE_OFFSET', 0, 0);
+		$this->redirect(str_replace('&key=import', '', Environment::get('request')));
+	}
+
+	/**
+	 * Schreibt die eingelesenen CSV-Zeilen in die Datenbank.
+	 *
+	 * @param list<list<string|null>> $arrTabelle
+	 * @param list<string>            $arrErlaubteSpalten
+	 */
+	private function importiereTabelle(string $strDateiname, array $arrTabelle, array $arrErlaubteSpalten, string $strTable): void
+	{
+		$arrKopf = array_map('trim', array_map('strval', array_shift($arrTabelle)));
+
+		// Nur Spalten übernehmen, die es in der Tabelle wirklich gibt
+		$arrSpalten = array();
+
+		foreach ($arrKopf as $intIndex => $strSpalte)
+		{
+			if (\in_array($strSpalte, $arrErlaubteSpalten, true))
+			{
+				$arrSpalten[$intIndex] = $strSpalte;
+			}
+		}
+
+		if (!$arrSpalten)
+		{
+			Message::addError($strDateiname.' enthält keine bekannten Spalten.');
+
+			return;
+		}
+
+		$objDatabase = Database::getInstance();
+		$intIdIndex  = array_search('id', $arrSpalten, true);
+
+		// Bei mitgelieferten Primärschlüsseln prüfen, ob diese schon vergeben sind
+		if ($intIdIndex !== false)
+		{
+			$arrDoppelt = array();
+
+			foreach ($arrTabelle as $arrZeile)
+			{
+				$intId = (int) ($arrZeile[$intIdIndex] ?? 0);
+
+				if ($intId < 1)
 				{
-					\Contao\Message::addError(sprintf($GLOBALS['TL_LANG']['ERR']['filetype'], $objFile->extension));
 					continue;
 				}
 
-				// Get separator
-				switch (\Contao\Input::post('separator'))
-				{
-					case 'semicolon':
-						$strSeparator = ';';
-						break;
+				$objTreffer = $objDatabase->prepare('SELECT id FROM '.$strTable.' WHERE id = ?')->execute($intId);
 
-					case 'tabulator':
-						$strSeparator = "\t";
-						break;
-
-					default:
-						$strSeparator = ',';
-						break;
-				}
-
-				$resFile = $objFile->handle;
-
-				while(($arrRow = @fgetcsv($resFile, null, $strSeparator)) !== false)
+				if ($objTreffer->numRows)
 				{
-					$arrTable[] = $arrRow;
-				}
-				// Feldnamen extrahieren
-				$feldnamen = implode(",",$arrTable[0]);
-				// ID-Position feststellen
-				$idpos = array_search("id",$arrTable[0]);
-				// Prüfung auf doppelte Primärschlüssel, wenn Primärschlüssel im Import
-				$doppelt = ""; // String für die doppelten ID
-				if(isset($idpos))
-				{
-					for($x=1;$x<count($arrTable);$x++)
-					{
-						$zeile = array();
-						foreach($arrTable[$x] as $wert)
-						{
-							// Sonderzeichen schützen
-							$wert = addslashes($wert);
-							$zeile[] = $wert;
-						} 
-						// Prüfen, wenn ID (Primärschlüssel) mit im Import ist und in Datenbank
-						$objErgebnis = $this->Database->prepare("SELECT * FROM ".$dc->table." WHERE id = ?")
-						                              ->execute($zeile[$idpos]); 
-						if($objErgebnis)
-						{
-							($doppelt) ? ($doppelt .= ", ".$objErgebnis->id) : ($doppelt = $objErgebnis->id);
-							//continue;
-						}
-					}
-				}
-				// Daten in MySQL-Tabelle schreiben
-				if($doppelt)
-				{
-					\Contao\Message::addError($objFile->name." wurde nicht importiert. Doppelte ID: ".$doppelt);
-				}
-				else
-				{
-					for($x=1;$x<count($arrTable);$x++)
-					{
-						$zeile = array();
-						foreach($arrTable[$x] as $wert)
-						{
-							// Sonderzeichen schützen
-							$wert = addslashes($wert);
-							$zeile[] = $wert;
-						} 
-						// Array trennen
-						$values = implode('", "',$zeile);
-						$values = '"'.$values.'"';
-						// Prüfen, wenn ID (Primärschlüssel) mit im Import ist und in Datenbank
-						//$this->Database->prepare("SELECT id FROM ".$dc->table." WHERE id = ?")->execute(\Input::get('id')); 
-						$this->Database->prepare("INSERT INTO ".$dc->table." (".$feldnamen.") VALUES (".$values.")")->execute(\Contao\Input::get('id'));
-					}
+					$arrDoppelt[] = $intId;
 				}
 			}
 
-//			$objVersions = new \Versions($dc->table, \Input::get('id'));
-//			$objVersions->create();
+			if ($arrDoppelt)
+			{
+				Message::addError($strDateiname.' wurde nicht importiert. Doppelte ID: '.implode(', ', $arrDoppelt));
 
-//			$this->Database->prepare("UPDATE " . $dc->table . " SET tableitems=? WHERE id=?")
-//						   ->execute(serialize($arrTable), \Input::get('id'));
-
-			// Cookie setzen und zurückkehren zur Adressenliste (key=import aus URL entfernen)
-			\Contao\System::setCookie('BE_PAGE_OFFSET', 0, 0);
-			$this->redirect(str_replace('&key=import', '', \Contao\Environment::get('request')));
+				return;
+			}
 		}
 
-		// Request-Token (REQUEST_TOKEN-Konstante existiert in Contao 5 nicht mehr)
-		$strToken = \Contao\System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+		// Spaltennamen sind gegen die DCA geprüft und damit sicher
+		$strFelder      = implode(', ', $arrSpalten);
+		$strPlatzhalter = implode(', ', array_fill(0, \count($arrSpalten), '?'));
+		$objStatement   = $objDatabase->prepare('INSERT INTO '.$strTable.' ('.$strFelder.') VALUES ('.$strPlatzhalter.')');
 
-		// Return form
+		$intZeilen = 0;
+
+		foreach ($arrTabelle as $arrZeile)
+		{
+			$arrWerte = array();
+
+			foreach (array_keys($arrSpalten) as $intIndex)
+			{
+				$arrWerte[] = (string) ($arrZeile[$intIndex] ?? '');
+			}
+
+			$objStatement->execute(...$arrWerte);
+			$intZeilen++;
+		}
+
+		Message::addConfirmation($strDateiname.': '.$intZeilen.' Datensätze importiert.');
+	}
+
+	/**
+	 * Ermittelt das im Formular gewählte Trennzeichen.
+	 */
+	private static function getSeparator(): string
+	{
+		switch (Input::post('separator'))
+		{
+			case 'semicolon':
+				return ';';
+
+			case 'tabulator':
+				return "\t";
+
+			default:
+				return ',';
+		}
+	}
+
+	/**
+	 * Erzeugt das Upload-Formular für den Import.
+	 */
+	private function erzeugeFormular(FileUpload $objUploader): string
+	{
+		// Request-Token über den Service holen
+		// (die Konstante REQUEST_TOKEN existiert in Contao 5 nicht mehr)
+		$strToken = System::getContainer()->get('contao.csrf.token_manager')->getDefaultTokenValue();
+		$strBack  = StringUtil::ampersand(str_replace('&key=import', '', Environment::get('request')));
+
 		return '
 <div id="tl_buttons">
-<a href="'.\Contao\StringUtil::ampersand(str_replace('&key=import', '', \Contao\Environment::get('request'))).'" class="header_back" title="'.\Contao\StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle']).'" accesskey="b">'.$GLOBALS['TL_LANG']['MSC']['backBT'].'</a>
+<a href="'.$strBack.'" class="header_back" title="'.StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['backBTTitle'] ?? '').'" accesskey="b">'.($GLOBALS['TL_LANG']['MSC']['backBT'] ?? 'Zurück').'</a>
 </div>
 
-<h2 class="sub_headline">'.$GLOBALS['TL_LANG']['MSC']['tw_import'][1].'</h2>
-'.\Contao\Message::generate().'
-<form action="'.\Contao\StringUtil::ampersand(\Contao\Environment::get('request'), true).'" id="tl_table_import" class="tl_form" method="post" enctype="multipart/form-data">
+<h2 class="sub_headline">'.($GLOBALS['TL_LANG']['MSC']['tw_import'][1] ?? 'CSV-Import').'</h2>
+'.Message::generate().'
+<form action="'.StringUtil::ampersand(Environment::get('request')).'" id="tl_table_import" class="tl_form" method="post" enctype="multipart/form-data">
 <div class="tl_formbody_edit">
 <input type="hidden" name="FORM_SUBMIT" value="tl_table_import">
 <input type="hidden" name="REQUEST_TOKEN" value="'.$strToken.'">
+<input type="hidden" name="MAX_FILE_SIZE" value="'.Config::get('maxFileSize').'">
 
 <div class="tl_tbox">
-  <h3><label for="separator">'.$GLOBALS['TL_LANG']['MSC']['separator'][0].'</label></h3>
+  <h3><label for="separator">'.($GLOBALS['TL_LANG']['MSC']['separator'][0] ?? 'Trennzeichen').'</label></h3>
   <select name="separator" id="separator" class="tl_select" onfocus="Backend.getScrollOffset()">
-    <option value="comma">'.$GLOBALS['TL_LANG']['MSC']['comma'].'</option>
-    <option value="semicolon">'.$GLOBALS['TL_LANG']['MSC']['semicolon'].'</option>
-    <option value="tabulator">'.$GLOBALS['TL_LANG']['MSC']['tabulator'].'</option>
-  </select>'.(($GLOBALS['TL_LANG']['MSC']['separator'][1] != '') ? '
+    <option value="comma">'.($GLOBALS['TL_LANG']['MSC']['comma'] ?? 'Komma').'</option>
+    <option value="semicolon">'.($GLOBALS['TL_LANG']['MSC']['semicolon'] ?? 'Semikolon').'</option>
+    <option value="tabulator">'.($GLOBALS['TL_LANG']['MSC']['tabulator'] ?? 'Tabulator').'</option>
+  </select>'.(!empty($GLOBALS['TL_LANG']['MSC']['separator'][1]) ? '
   <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['MSC']['separator'][1].'</p>' : '').'
-  <h3>'.$GLOBALS['TL_LANG']['MSC']['source'][0].'</h3>'.$objUploader->generateMarkup().(isset($GLOBALS['TL_LANG']['MSC']['source'][1]) ? '
+  <h3>'.($GLOBALS['TL_LANG']['MSC']['source'][0] ?? 'Quelldatei').'</h3>'.$objUploader->generateMarkup().(!empty($GLOBALS['TL_LANG']['MSC']['source'][1]) ? '
   <p class="tl_help tl_tip">'.$GLOBALS['TL_LANG']['MSC']['source'][1].'</p>' : '').'
 </div>
 
@@ -217,10 +298,10 @@ class Adressen_Backend extends \Contao\Backend
 <div class="tl_formbody_submit">
 
 <div class="tl_submit_container">
-  <input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="'.\Contao\StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['tw_import'][0]).'">
+  <input type="submit" name="save" id="save" class="tl_submit" accesskey="s" value="'.StringUtil::specialchars($GLOBALS['TL_LANG']['MSC']['tw_import'][0] ?? 'Importieren').'">
 </div>
 
 </div>
-</form>'; 
+</form>';
 	}
 }

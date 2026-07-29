@@ -1,5 +1,133 @@
 # Adressen Changelog
 
+## Version 4.0.0 (2026-07-29) - mit Claude Code
+
+Das Bundle läuft jetzt sowohl unter **Contao 4.13** als auch unter **Contao 5** (getestet
+gegen Contao 5.7.7) und setzt **PHP 8.1** voraus. Alle Klassen wurden auf
+`declare(strict_types=1);` umgestellt, die Kommentare sind auf Deutsch.
+
+### ⚠️ Update-Hinweise
+
+* `contao:migrate` schlägt das Entfernen der Spalten **`tl_adressen.addImage`**,
+  **`tl_adressen.prozentx`** und **`tl_adressen.prozenty`** vor. Diese Felder standen in
+  keiner Palette, waren also nie im Backend erreichbar und immer leer – der Datenverlust
+  ist keiner. Die Fotoausgabe richtet sich jetzt allein nach `tl_adressen.singleSRC`.
+* `tl_adressen.iban` wird von `varchar(22)` auf `varchar(34)` verbreitert (maximale
+  IBAN-Länge). Bestehende Werte bleiben erhalten.
+* Nach dem Update den **Produktions-Cache neu aufbauen**, weil sich die Service-IDs und
+  die Konfiguration geändert haben.
+* Die Service-Datei heißt jetzt `Resources/config/services.yaml` (vorher `.yml`), die
+  Cron-Services `schachbulle.adressen.cron.extrahieren` bzw.
+  `schachbulle.adressen.cron.kontrollieren`. Die alten IDs bleiben als Alias erhalten.
+
+### Contao 4.13 + Contao 5
+
+* Add: `ContaoAdressenBundle::isContao5()` erkennt die Contao-Version über
+  `Composer\InstalledVersions`.
+* Fix: `config.dataContainer` war fest auf `\Contao\DC_Table::class` gesetzt. Contao 4.13
+  erwartet dort den Kurznamen `'Table'` – die DCA-Dateien setzen den Wert jetzt
+  versionsabhängig.
+* Fix: Die Kurzschreibweise der Operationen (`'!edit'`, `'!all'`) gibt es erst ab
+  Contao 5. Für Contao 4.13 werden vollständige Operations-Arrays gesetzt.
+* Fix: `\Contao\DataContainer::SORT_INITIAL_LETTER_ASC` durch den Zahlenwert `1` ersetzt,
+  der in beiden Versionen gilt.
+* Add: `Classes\Kompatibilitaet::insertTagsErsetzen()` kapselt den Unterschied zwischen
+  dem Service `contao.insert_tag.parser` (ab Contao 5) und
+  `Controller::replaceInsertTags()` (Contao 4.13).
+* Change: `composer.json` verlangt `contao/core-bundle: ^4.13 || ^5.0` und `php: ^8.1`.
+  Die nie genutzten Abhängigkeiten `codefog/contao-haste`,
+  `menatwork/contao-multicolumnwizard-bundle` und `doctrine/doctrine-cache-bundle` wurden
+  entfernt.
+
+### Behobene Fehler
+
+* Fix: **Sicherheitslücke im CSV-Import.** `Adressen_Backend::importAdressen()` baute das
+  `INSERT`-Statement per String-Verkettung aus Spaltennamen und Werten der hochgeladenen
+  Datei zusammen (nur mit `addslashes()` „geschützt"). Jetzt werden die Spaltennamen gegen
+  die DCA-Definition geprüft und alle Werte als Platzhalter gebunden.
+* Fix: **Sicherheitslücke im Suchmodul.** `Suche::compile()` verkettete den URL-Parameter
+  `funktion[]` ungeprüft in die `WHERE`-Klausel. Der Parameter wird jetzt auf ganze Zahlen
+  gefiltert und als Platzhalter gebunden.
+* Fix: Das Foto im Insert-Tag `{{adresse::ID}}` funktionierte nicht mehr – der Code fragte
+  die Felder `addBild`, `bild` und `size` ab, die es in `tl_adressen` gar nicht (mehr)
+  gibt. Jetzt wird `singleSRC` per `FilesModel::findByUuid()` ausgelesen.
+* Fix: Der Bildausschnitt wurde aus `prozentx`/`prozenty` als Modus `"0_0"` gebaut – ein
+  Wert, den Contao 5 nur noch als veralteten Legacy-Modus akzeptiert. Ersetzt durch den
+  regulären Zuschneide-Modus `crop`.
+* Fix: Das Inhaltselement setzte nie die Template-Variable `adresse`, die
+  `ce_adressen.html5` ausgibt – die Anschrift fehlte in der Frontend-Ausgabe komplett.
+* Fix: `ContentElements\Adresse::compile()` prüfte mit `if($objAdresse)` auf einen Treffer.
+  Das Result-Objekt ist immer „wahr"; jetzt wird `numRows` geprüft.
+* Fix: Die Palette von `tl_adressen` enthielt das nicht existierende Feld `published`, die
+  von `tl_content` die nicht existierenden Felder `adresse_alttemplate`, `adresse_tpl`,
+  `guest` (ab Contao 5) und `space` (seit Contao 4). Für ein abweichendes Template dient
+  jetzt das Contao-Standardfeld `customTpl`.
+* Fix: Die Paletten von `tl_module` enthielten die seit Contao 4 entfernten Felder `align`
+  und `space`; `customTpl` fehlte.
+* Fix: `tl_adressen::addIcon()` hatte zwei unerreichbare Zweige – deaktivierte, aber
+  eingebundene Adressen bekamen dasselbe Symbol wie unbenutzte. Alle vier Kombinationen
+  aus „aktiv" und „eingebunden" werden jetzt korrekt unterschieden.
+* Fix: `Cron\ExtrahiereAdressen` suchte die Seite eines News-Beitrags über `tl_news.pid` –
+  das ist aber das Archiv, nicht die Seite. Die Zielseite wird jetzt über
+  `tl_news_archive.jumpTo` ermittelt. Fehlt das News-Bundle, wird die Tabelle übersprungen
+  statt einen SQL-Fehler auszulösen.
+* Fix: `Cron\KontrolliereAdressen` übergab die Empfänger als komma-getrennten String an
+  `Email::sendTo()`; Namen mit Komma hätten die Liste zerrissen. Jetzt wird das Array
+  direkt übergeben.
+* Fix: `Funktionen::getFunktionen()` wurde als `options_callback` mit dem DataContainer als
+  Argument aufgerufen und hätte mit einem Typ-Hint eine Ausnahme geworfen. Die Methode ist
+  jetzt parameterlos, für die Suche gibt es `getAktiveFunktionen()`.
+* Fix: Im Template `adresse_ergebnisse.html5` wurde die nie definierte Variable `$ja`
+  abgefragt (PHP-8-Warnung) und das JavaScript über den Contao-3-Pfad
+  `system/modules/adressen/assets/js/` eingebunden.
+
+### Beseitigte Warnungen und Deprecations
+
+* Fix: `$this->Database` löst ab Contao 5.2 eine Deprecation aus. In allen Klassen und
+  DCA-Callbacks durch `Database::getInstance()` ersetzt, die `$this->import('Database')`
+  -Aufrufe entfielen damit.
+* Fix: Undefinierte Variablen `$telefon`, `$telefon_fest`, `$telefon_mobil`, `$telefax` und
+  `$email` in `Modules\Wertungsreferenten`, wenn die zugehörigen `*_view`-Schalter aus
+  waren.
+* Fix: Undefinierter Array-Index in `Modules\Wertungsreferenten::compile()` für Verbände
+  ohne zugeordneten Referenten.
+* Fix: Dynamische Properties (`$this->linken`, `$this->Adresstemplate`) – seit PHP 8.2
+  veraltet. Ersetzt durch deklarierte, typisierte Properties.
+* Fix: URL-Parameter wurden ungeprüft an `strtolower()`/`trim()` übergeben; wird `s` oder
+  `join` als Array übergeben, gab es eine „Array to string conversion"-Warnung.
+* Fix: `fgetcsv()` bekam `null` als Länge übergeben (ab PHP 8.4 veraltet) – jetzt `0`.
+
+### Aufräumarbeiten
+
+* Add: `Classes\Adressdaten` bündelt die Aufbereitung eines Datensatzes (Name, Anschrift,
+  Telefon-/Fax-/E-Mail-Listen, Mobilfunkerkennung, `tel:`-Links). Die Logik war vorher in
+  `ContentElements\Adresse`, `Classes\Adressen_Frontend` und `Modules\Wertungsreferenten`
+  dreifach kopiert.
+* Delete: `Classes\Wertungsreferenten` – die Klasse war nirgends registriert (das Modul
+  nutzt `Modules\Wertungsreferenten`) und damit toter Code.
+* Delete: Die Templates `adresse_default-neu.html5` (enthielt einen
+  `showTemplateVars()`-Debugaufruf), `adresse_default.html5` und `adresse_suche.html5`
+  wurden von keiner Klasse mehr verwendet.
+* Delete: `tl_adressen::pagePicker()` verwies auf `contao/page.php` aus Contao 3.
+* Delete: Der nicht eingebundene Bibliotheks-Ballast `clipboard.min.js`; `adressen.js`
+  kommt jetzt ohne jQuery aus (Contao 4/5 bindet jQuery nicht mehr standardmäßig ein) und
+  nutzt die Clipboard-API mit Rückfallebene.
+* Delete: In `Modules\Wertungsreferenten` war die Verbandsliste ein zweites Mal fest
+  einprogrammiert; jetzt wird – wie in der DCA – `$GLOBALS['TL_LANG']['tl_adressen']['verbaende']`
+  genutzt. Ebenso entfiel die tote Referats-Liste in `Funktionen::getFunktionen()`.
+* Delete: Veraltete Sprachschlüssel für die längst entfernten Felder `adressen`,
+  `telefone`, `emails` und `published`.
+* Change: Ausgaben in Templates und Modulen werden über `StringUtil::specialchars()`
+  maskiert, externe Links erhalten `rel="noopener"`, E-Mail-Adressen in der Trefferliste
+  werden über `{{email::}}` gegen Spambots verschleiert.
+
+### Tests
+
+* Add: `tests/` mit 37 PHPUnit-Tests für `Classes\Adressdaten` (Namensaufbau,
+  Anschrift, Mobilfunkerkennung, `tel:`-Links, `*_view`-Schalter, E-Mail-Whitelist) und die
+  Bundle-Klasse, dazu `phpunit.xml.dist` und ein Bootstrap, der auch ohne
+  `composer install` funktioniert.
+
 ## Version 3.1.0 (2026-06-20) - mit Claude Code
 
 * Change: Die beiden veralteten Standalone-Skripte `extract.php` und `check.php` wurden als echte Contao-5-Cronjobs neu umgesetzt.

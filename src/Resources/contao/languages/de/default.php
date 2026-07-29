@@ -1,5 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
 $GLOBALS['TL_LANG']['CTE']['adressen'] = array('Adresse', 'Eine Adresse einfügen');
 
 $GLOBALS['TL_LANG']['tl_adressen']['verbaende'] = array

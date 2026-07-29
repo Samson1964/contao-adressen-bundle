@@ -1,24 +1,28 @@
 services:
-    _instanceof:
-        Contao\CoreBundle\Framework\FrameworkAwareInterface:
-            calls:
-                - ["setFramework", ["@contao.framework"]]
+    _defaults:
+        autoconfigure: false
+        public: false
 
     # Cronjob: Ermittelt die Einbindungen und befüllt tl_adressen.links (täglich)
-    contao.cron.adressen_extrahieren:
+    schachbulle.adressen.cron.extrahieren:
         class: Schachbulle\ContaoAdressenBundle\Cron\ExtrahiereAdressen
         arguments:
             - '@contao.framework'
-            - '@monolog.logger.contao.cron'
+            - '@?monolog.logger.contao.cron'
         tags:
             - { name: contao.cronjob, interval: daily }
 
     # Cronjob: Versendet die Kontroll-/Verifizierungs-E-Mails
     # (vierteljährlich: 1. Januar/April/Juli/Oktober um 04:00 Uhr)
-    contao.cron.adressen_kontrollieren:
+    schachbulle.adressen.cron.kontrollieren:
         class: Schachbulle\ContaoAdressenBundle\Cron\KontrolliereAdressen
         arguments:
             - '@contao.framework'
-            - '@monolog.logger.contao.cron'
+            - '@?monolog.logger.contao.cron'
         tags:
             - { name: contao.cronjob, interval: '0 4 1 */3 *' }
+
+    # Alte Service-IDs bleiben als Alias erhalten, damit bestehende
+    # Konfigurationen nicht brechen.
+    contao.cron.adressen_extrahieren: '@schachbulle.adressen.cron.extrahieren'
+    contao.cron.adressen_kontrollieren: '@schachbulle.adressen.cron.kontrollieren'

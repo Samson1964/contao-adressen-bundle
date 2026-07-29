@@ -1,4 +1,12 @@
-<?php 
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
 
 $GLOBALS['TL_LANG']['tl_content']['adresse_legend'] = 'Einstellungen';
 $GLOBALS['TL_LANG']['tl_content']['adresse_id'] = array('Adresse auswählen', 'Bitte wählen Sie die anzuzeigende Adresse aus.');
@@ -13,10 +21,7 @@ $GLOBALS['TL_LANG']['tl_content']['adresse_altformat'] = array('Bildformat', 'Al
 $GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau'] = array('Zugeordnetes Foto', 'Das Bild wird in der Frontendgröße angezeigt.');
 $GLOBALS['TL_LANG']['tl_content']['adresse_singleSRC'] = array('Foto ersetzen durch:', 'Datei aus dem Dateisystem wählen');
 
-$GLOBALS['TL_LANG']['tl_content']['adresstemplate_legend'] = 'Alternatives Template';
-$GLOBALS['TL_LANG']['tl_content']['adresse_alttemplate'] = array('Aktivieren', 'Alternatives Template aktivieren');
-$GLOBALS['TL_LANG']['tl_content']['adresse_tpl'] = array('Template', 'Bitte wählen Sie das zu verwendende Frontend-Template aus.');
-
-// Sonstige 
+// Sonstige
 $GLOBALS['TL_LANG']['tl_content']['adresse_bildvorschau_leer'] = 'Fehler: Pfad nicht gefunden!';
 $GLOBALS['TL_LANG']['tl_content']['adresse_nichtaktiv'] = ' (deaktiviert)';
+$GLOBALS['TL_LANG']['tl_content']['editalias'] = 'Adresse ID %s bearbeiten';

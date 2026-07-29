@@ -1,18 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
 namespace Schachbulle\ContaoAdressenBundle\Cron;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Database;
+use Contao\Email;
+use Contao\FilesModel;
+use Contao\StringUtil;
+use Contao\System;
 use Psr\Log\LoggerInterface;
 
 /**
  * Cronjob "Adressen kontrollieren"
  *
- * Verschickt an alle aktiven, auf der Website eingebundenen Adressen eine E-Mail
- * mit den gespeicherten Daten und der Bitte, diese zu prüfen und Änderungen zu melden.
+ * Verschickt an alle aktiven, auf der Website eingebundenen Adressen eine
+ * E-Mail mit den gespeicherten Daten und der Bitte, diese zu prüfen und
+ * Änderungen zu melden.
  *
- * Ersetzt das frühere Standalone-Skript src/Resources/public/check.php.
- * Das Ausführungsintervall wird in Resources/config/services.yml über den
+ * Das Ausführungsintervall wird in Resources/config/services.yaml über den
  * Tag "contao.cronjob" (interval) festgelegt.
  *
  * ACHTUNG: Dieser Cronjob verschickt E-Mails an echte Empfänger. Solange die
@@ -32,6 +45,58 @@ class KontrolliereAdressen
 	 */
 	private const TEST_EMPFAENGER = 'Frank Binding <webmaster@schachbund.com>';
 
+	/**
+	 * Absender, Antwortadresse und Betreff der Kontroll-E-Mail
+	 */
+	private const ABSENDER      = 'server@schachbund.de';
+	private const ABSENDER_NAME = 'Deutscher Schachbund';
+	private const ANTWORT_AN    = 'DSB-Presse <presse@schachbund.com>';
+	private const BETREFF       = '[Deutscher Schachbund] Adressen-Überprüfung';
+
+	/**
+	 * Basis-URL für die Anzeige des Standardfotos in der E-Mail
+	 */
+	private const FOTO_BASIS_URL = 'https://www.schachbund.de/';
+
+	/**
+	 * Felder, die in der E-Mail aufgelistet werden: [Beschriftung => Spalte]
+	 */
+	private const FELDER_ADRESSE = array
+	(
+		'Name'       => 'nachname',
+		'Vorname'    => 'vorname',
+		'Titel'      => 'titel',
+		'Firma'      => 'firma',
+		'Straße'     => 'strasse',
+		'PLZ'        => 'plz',
+		'Ort'        => 'ort',
+		'Telefon 1'  => 'telefon1',
+		'Telefon 2'  => 'telefon2',
+		'Telefon 3'  => 'telefon3',
+		'Telefon 4'  => 'telefon4',
+		'Fax 1'      => 'telefax1',
+		'Fax 2'      => 'telefax2',
+		'E-Mail 1'   => 'email1',
+		'E-Mail 2'   => 'email2',
+		'E-Mail 3'   => 'email3',
+		'E-Mail 4'   => 'email4',
+		'E-Mail 5'   => 'email5',
+		'E-Mail 6'   => 'email6',
+	);
+
+	private const FELDER_WEB = array
+	(
+		'Homepage'  => 'homepage',
+		'Facebook'  => 'facebook',
+		'Twitter'   => 'twitter',
+		'Instagram' => 'instagram',
+		'Skype'     => 'skype',
+		'WhatsApp'  => 'whatsapp',
+		'Threema'   => 'threema',
+		'Telegram'  => 'telegram',
+		'IRC'       => 'irc',
+	);
+
 	public function __construct(
 		private readonly ContaoFramework $framework,
 		private readonly LoggerInterface|null $logger = null,
@@ -44,146 +109,186 @@ class KontrolliereAdressen
 		// Contao-Framework initialisieren (Legacy-Klassen Database, FilesModel, Email)
 		$this->framework->initialize();
 
-		$db         = \Contao\Database::getInstance();
-		$projectDir = \Contao\System::getContainer()->getParameter('kernel.project_dir');
-
-		$arrSearch  = array('ä', 'Ä', 'ö', 'Ö', 'ü', 'Ü', 'é', 'ß');
-		$arrReplace = array('ae', 'Ae', 'oe', 'Oe', 'ue', 'Ue', 'e', 'ss');
-
-		// Alle aktiven Adressen mit mindestens einer E-Mail-Adresse laden
-		$objAdressen = $db->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1'")
-		                  ->execute();
+		$objAdressen = Database::getInstance()
+			->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1' AND links != ''")
+			->execute();
 
 		$intMails = 0;
 
 		while ($objAdressen->next())
 		{
-			// Nur veröffentlichte (auf der Website eingebundene) Adressen prüfen
-			if (!$objAdressen->links)
+			$arrEmpfaenger = $this->getEmpfaenger($objAdressen);
+
+			if (!$arrEmpfaenger)
 			{
 				continue;
 			}
 
-			// E-Mail-Text zusammenbauen
-			$text  = '<html>';
-			$text .= '<head>';
-			$text .= '<meta charset="utf-8">';
-			$text .= '<title>[Deutscher Schachbund] Adressen-Überprüfung</title>';
-			$text .= '<style>body {font-family:Verdana; font-size:12px;}</style>';
-			$text .= '</head>';
-			$text .= '<body>';
-			$text .= '<p>Liebe Schachfreundin, lieber Schachfreund,</p>';
-			$text .= '<p>in regelmäßigen Abständen werden die in unserer internen Adressen-Datenbank gespeicherten Datensätze automatisch mittels der dort hinterlegten E-Mail-Adresse(n) überprüft.<br>';
-			$text .= 'Bitte nehmen Sie sich kurz Zeit und werfen Sie einen Blick auf die nachfolgend aufgeführten Daten. Melden Sie uns Änderungen, indem Sie diese E-Mail beantworten.</p>';
-			$text .= '<ul>';
-			$text .= "<li>Name: <b>".$objAdressen->nachname."</b></li>\n";
-			$text .= "<li>Vorname: <b>".$objAdressen->vorname."</b></li>\n";
-			$text .= "<li>Titel: <b>".$objAdressen->titel."</b></li>\n";
-			$text .= "<li>Firma: <b>".$objAdressen->firma."</b></li>\n";
-			$text .= "<li>Straße: <b>".$objAdressen->strasse."</b></li>\n";
-			$text .= "<li>PLZ: <b>".$objAdressen->plz."</b></li>\n";
-			$text .= "<li>Ort: <b>".$objAdressen->ort."</b></li>\n";
-			$text .= "<li>Telefon 1: <b>".$objAdressen->telefon1."</b></li>\n";
-			$text .= "<li>Telefon 2: <b>".$objAdressen->telefon2."</b></li>\n";
-			$text .= "<li>Telefon 3: <b>".$objAdressen->telefon3."</b></li>\n";
-			$text .= "<li>Telefon 4: <b>".$objAdressen->telefon4."</b></li>\n";
-			$text .= "<li>Fax 1: <b>".$objAdressen->telefax1."</b></li>\n";
-			$text .= "<li>Fax 2: <b>".$objAdressen->telefax2."</b></li>\n";
-			$text .= "<li>E-Mail 1: <b>".$objAdressen->email1."</b></li>\n";
-			$text .= "<li>E-Mail 2: <b>".$objAdressen->email2."</b></li>\n";
-			$text .= "<li>E-Mail 3: <b>".$objAdressen->email3."</b></li>\n";
-			$text .= "<li>E-Mail 4: <b>".$objAdressen->email4."</b></li>\n";
-			$text .= "<li>E-Mail 5: <b>".$objAdressen->email5."</b></li>\n";
-			$text .= "<li>E-Mail 6: <b>".$objAdressen->email6."</b></li>\n";
-			$text .= '</ul>';
-			$text .= "<p><i>(E-Mail-Adressen werden für Spambots nicht lesbar dargestellt!)</i></p>\n";
-			$text .= '<ul>';
-			$text .= "<li>Homepage: <b>".$objAdressen->homepage."</b></li>\n";
-			$text .= "<li>Facebook: <b>".$objAdressen->facebook."</b></li>\n";
-			$text .= "<li>Twitter: <b>".$objAdressen->twitter."</b></li>\n";
-			$text .= "<li>Instagram: <b>".$objAdressen->instagram."</b></li>\n";
-			$text .= "<li>Skype: <b>".$objAdressen->skype."</b></li>\n";
-			$text .= "<li>WhatsApp: <b>".$objAdressen->whatsapp."</b></li>\n";
-			$text .= "<li>Threema: <b>".$objAdressen->threema."</b></li>\n";
-			$text .= "<li>Telegram: <b>".$objAdressen->telegram."</b></li>\n";
-			$text .= "<li>IRC: <b>".$objAdressen->irc."</b></li>\n";
-			if ($objAdressen->addImage)
-			{
-				$objModel = \Contao\FilesModel::findByUuid($objAdressen->singleSRC);
-				if ($objModel !== null && is_file($projectDir . '/' . $objModel->path))
-				{
-					$foto = 'https://www.schachbund.de/'.$objModel->path;
-					$text .= '<li>Standardfoto: <a href="'.$foto.'"><img src="'.$foto.'" height="80"></a></li>'."\n";
-					$text .= '</ul>';
-					$text .= "<p><i>(Das Standardfoto wird wie im Vorschaubild verkleinert angezeigt, wenn die Fotoanzeige aktiviert ist. Statt des Standardfotos kann auf den jeweiligen Seiten auch ein anderes Foto eingebunden sein.)</i></p>\n";
-				}
-				else
-				{
-					$text .= "<li>Standardfoto: <b>-</b></li>\n";
-					$text .= '</ul>';
-					$text .= "<p><i>(Bitte senden Sie uns ein Foto oder einen Link zu einem Foto, welches wir verwenden dürfen.)</i></p>\n";
-				}
-			}
-			else
-			{
-				$text .= "<li>Standardfoto: <b>-</b></li>\n";
-				$text .= '</ul>';
-				$text .= "<p><i>(Bitte senden Sie uns ein Foto oder einen Link zu einem Foto, welches wir verwenden dürfen.)</i></p>\n";
-			}
-			$text .= '<ul>';
-			$text .= "<li>Profiltext: <b>".$objAdressen->text."</b></li>\n\n";
-			$text .= '</ul>';
-			// Einbindungen (Spalte links) als HTML-Liste ausgeben
-			$text .= "<p>Ihre Adresse wird auf folgenden Seiten angezeigt:</p>";
-			$arrLinks = explode("\n", trim((string) $objAdressen->links));
-			$text .= '<ul>';
-			foreach ($arrLinks as $strLink)
-			{
-				if ($strLink === '')
-				{
-					continue;
-				}
-				$text .= '<li><a href="'.$strLink.'">'.$strLink.'</a></li>'."\n";
-			}
-			$text .= '</ul>';
-			$text .= '<p>Deutscher Schachbund e.V.<br>';
-			$text .= 'Öffentlichkeitsarbeit</p>';
-			$text .= '<p><i>Dies ist eine automatisch generierte E-Mail.</i></p>';
-			$text .= '</body>';
-			$text .= '</html>';
-
-			// E-Mail aufbauen
-			$email = new \Contao\Email();
-			$email->from     = 'server@schachbund.de';
-			$email->fromName = 'Deutscher Schachbund';
-			$email->charset  = 'utf-8';
-			$email->subject  = '[Deutscher Schachbund] Adressen-Überprüfung';
-			$email->html     = $text;
-			$email->replyTo('DSB-Presse <presse@schachbund.com>');
-
-			// Empfänger inkl. aller hinterlegten E-Mail-Adressen zusammenstellen
-			$arrEmpfaenger = array();
-			$strName       = str_replace($arrSearch, $arrReplace, $objAdressen->vorname . ' ' . $objAdressen->nachname);
-			if ($objAdressen->email1) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email1 . '>';
-			if ($objAdressen->email2) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email2 . '>';
-			if ($objAdressen->email3) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email3 . '>';
-			if ($objAdressen->email4) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email4 . '>';
-			if ($objAdressen->email5) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email5 . '>';
-			if ($objAdressen->email6) $arrEmpfaenger[] = $strName . ' <' . $objAdressen->email6 . '>';
+			$objEmail = new Email();
+			$objEmail->from     = self::ABSENDER;
+			$objEmail->fromName = self::ABSENDER_NAME;
+			$objEmail->charset  = 'utf-8';
+			$objEmail->subject  = self::BETREFF;
+			$objEmail->html     = $this->erzeugeText($objAdressen);
+			$objEmail->replyTo(self::ANTWORT_AN);
 
 			// Versenden – im Testmodus ausschließlich an den Test-Empfänger
 			if (self::TESTMODUS)
 			{
-				$email->sendTo(self::TEST_EMPFAENGER);
+				$objEmail->sendTo(self::TEST_EMPFAENGER);
 			}
 			else
 			{
-				$email->sendTo(implode(',', $arrEmpfaenger));
+				$objEmail->sendTo($arrEmpfaenger);
 			}
 
 			$intMails++;
 		}
 
-		$this->logger?->info(sprintf('[Adressen-Verwaltung] %d Kontroll-E-Mails verschickt%s', $intMails, self::TESTMODUS ? ' (Testmodus – nur an Test-Empfänger)' : ''));
+		$this->logger?->info(sprintf(
+			'[Adressen-Verwaltung] %d Kontroll-E-Mails verschickt%s',
+			$intMails,
+			self::TESTMODUS ? ' (Testmodus – nur an den Test-Empfänger)' : ''
+		));
+	}
+
+	/**
+	 * Stellt die Empfängerliste aus allen hinterlegten E-Mail-Adressen zusammen.
+	 *
+	 * @return list<string>
+	 */
+	private function getEmpfaenger(object $objAdresse): array
+	{
+		// Umlaute im Anzeigenamen ersetzen, damit der Header nicht kodiert werden muss
+		$arrSearch  = array('ä', 'Ä', 'ö', 'Ö', 'ü', 'Ü', 'é', 'ß');
+		$arrReplace = array('ae', 'Ae', 'oe', 'Oe', 'ue', 'Ue', 'e', 'ss');
+
+		$strName = trim(str_replace($arrSearch, $arrReplace, (string) $objAdresse->vorname.' '.(string) $objAdresse->nachname));
+
+		// Kommas würden die Empfängerliste zerreißen
+		$strName = str_replace(array(',', '<', '>'), '', $strName);
+
+		$arrEmpfaenger = array();
+
+		for ($i = 1; $i <= 6; $i++)
+		{
+			$strMail = trim((string) $objAdresse->{'email'.$i});
+
+			if ($strMail === '')
+			{
+				continue;
+			}
+
+			$arrEmpfaenger[] = $strName !== '' ? $strName.' <'.$strMail.'>' : $strMail;
+		}
+
+		return $arrEmpfaenger;
+	}
+
+	/**
+	 * Baut den HTML-Text der Kontroll-E-Mail zusammen.
+	 */
+	private function erzeugeText(object $objAdresse): string
+	{
+		$strText  = '<html>';
+		$strText .= '<head>';
+		$strText .= '<meta charset="utf-8">';
+		$strText .= '<title>'.StringUtil::specialchars(self::BETREFF).'</title>';
+		$strText .= '<style>body {font-family:Verdana; font-size:12px;}</style>';
+		$strText .= '</head>';
+		$strText .= '<body>';
+		$strText .= '<p>Liebe Schachfreundin, lieber Schachfreund,</p>';
+		$strText .= '<p>in regelmäßigen Abständen werden die in unserer internen Adressen-Datenbank gespeicherten Datensätze automatisch mittels der dort hinterlegten E-Mail-Adresse(n) überprüft.<br>';
+		$strText .= 'Bitte nehmen Sie sich kurz Zeit und werfen Sie einen Blick auf die nachfolgend aufgeführten Daten. Melden Sie uns Änderungen, indem Sie diese E-Mail beantworten.</p>';
+
+		$strText .= self::erzeugeListe($objAdresse, self::FELDER_ADRESSE);
+		$strText .= '<p><i>(E-Mail-Adressen werden für Spambots nicht lesbar dargestellt!)</i></p>'."\n";
+
+		$strHinweis = '';
+
+		$strText .= '<ul>';
+		$strText .= self::erzeugeEintraege($objAdresse, self::FELDER_WEB);
+		$strText .= $this->erzeugeFotoEintrag($objAdresse, $strHinweis);
+		$strText .= '</ul>';
+		$strText .= '<p><i>'.$strHinweis.'</i></p>'."\n";
+
+		$strText .= '<ul>';
+		$strText .= '<li>Profiltext: <b>'.StringUtil::specialchars((string) $objAdresse->text).'</b></li>'."\n";
+		$strText .= '</ul>';
+
+		// Einbindungen (Spalte links) als HTML-Liste ausgeben
+		$strText .= '<p>Ihre Adresse wird auf folgenden Seiten angezeigt:</p>';
+		$strText .= '<ul>';
+
+		foreach (array_filter(array_map('trim', explode("\n", (string) $objAdresse->links))) as $strLink)
+		{
+			$strLink = StringUtil::specialchars($strLink);
+			$strText .= '<li><a href="'.$strLink.'">'.$strLink.'</a></li>'."\n";
+		}
+
+		$strText .= '</ul>';
+		$strText .= '<p>Deutscher Schachbund e.V.<br>';
+		$strText .= 'Öffentlichkeitsarbeit</p>';
+		$strText .= '<p><i>Dies ist eine automatisch generierte E-Mail.</i></p>';
+		$strText .= '</body>';
+		$strText .= '</html>';
+
+		return $strText;
+	}
+
+	/**
+	 * Erzeugt eine vollständige <ul>-Liste aus den angegebenen Feldern.
+	 *
+	 * @param array<string, string> $arrFelder
+	 */
+	private static function erzeugeListe(object $objAdresse, array $arrFelder): string
+	{
+		return '<ul>'.self::erzeugeEintraege($objAdresse, $arrFelder).'</ul>';
+	}
+
+	/**
+	 * Erzeugt die <li>-Einträge aus den angegebenen Feldern.
+	 *
+	 * @param array<string, string> $arrFelder
+	 */
+	private static function erzeugeEintraege(object $objAdresse, array $arrFelder): string
+	{
+		$strText = '';
+
+		foreach ($arrFelder as $strLabel => $strFeld)
+		{
+			$strText .= '<li>'.$strLabel.': <b>'.StringUtil::specialchars((string) $objAdresse->$strFeld).'</b></li>'."\n";
+		}
+
+		return $strText;
+	}
+
+	/**
+	 * Erzeugt den Listeneintrag für das Standardfoto und den passenden Hinweistext.
+	 *
+	 * @param string $strHinweis Wird mit dem passenden Hinweistext befüllt
+	 */
+	private function erzeugeFotoEintrag(object $objAdresse, string &$strHinweis): string
+	{
+		$strHinweis = 'Bitte senden Sie uns ein Foto oder einen Link zu einem Foto, welches wir verwenden dürfen.';
+
+		if (!$objAdresse->singleSRC)
+		{
+			return '<li>Standardfoto: <b>-</b></li>'."\n";
+		}
+
+		$objModel      = FilesModel::findByUuid($objAdresse->singleSRC);
+		$strProjectDir = System::getContainer()->getParameter('kernel.project_dir');
+
+		if ($objModel === null || !$objModel->path || !is_file($strProjectDir.'/'.$objModel->path))
+		{
+			return '<li>Standardfoto: <b>-</b></li>'."\n";
+		}
+
+		$strHinweis = 'Das Standardfoto wird wie im Vorschaubild verkleinert angezeigt, wenn die Fotoanzeige aktiviert ist. Statt des Standardfotos kann auf den jeweiligen Seiten auch ein anderes Foto eingebunden sein.';
+
+		$strFoto = StringUtil::specialchars(self::FOTO_BASIS_URL.$objModel->path);
+
+		return '<li>Standardfoto: <a href="'.$strFoto.'"><img src="'.$strFoto.'" height="80" alt="Standardfoto"></a></li>'."\n";
 	}
 }

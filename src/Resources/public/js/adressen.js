@@ -1,31 +1,57 @@
-(function($) {
-	$(document).ready(function() {
+/*
+ * Adressen-Verwaltung: Kopieren der ausgewählten E-Mail-Adressen
+ *
+ * Kommt ohne jQuery aus, weil Contao 4/5 jQuery nicht mehr standardmäßig
+ * einbindet. Bevorzugt wird die Clipboard-API genutzt; steht sie nicht zur
+ * Verfügung (z.B. ohne HTTPS), wird auf das Textfeld zurückgegriffen.
+ */
+document.addEventListener('DOMContentLoaded', function () {
+	var button = document.getElementById('kopieren');
+	var textarea = document.getElementById('kopiertext');
 
-		$('#kopieren').click(function() {
-			// Die markierten Elemente selektieren
-			var elements = $("input.email-auswahl:checked");
-			var text = '';
-			
-			// Schleife �ber die einzelnen Elemente
-			$.each(elements, function(index, item) 
-			{
-				text = text + $(this).val() + "\n";
-				//alert("Value:" + $(this).val());
-			});
+	if (!button || !textarea) {
+		return;
+	}
 
-    		$('#kopiertext').css('display', 'block');
-    		$('#kopiertext').html(text);
-    		$('#kopiertext').select();
-			try {
-			    var successful = document.execCommand('copy');
-			    var msg = successful ? 'successful' : 'unsuccessful';
-			    console.log('Copying text command was ' + msg);
-			} catch (err) {
-			    console.error('Oops, unable to copy');
-			}
-    		$('#kopiertext').css('display', 'none');
-			//alert(window.clipboardData.getData('Text'));
+	button.addEventListener('click', function () {
+		var checkboxes = document.querySelectorAll('input.email-auswahl:checked');
+		var zeilen = [];
+
+		Array.prototype.forEach.call(checkboxes, function (checkbox) {
+			zeilen.push(checkbox.value);
 		});
 
+		var text = zeilen.join('\n');
+
+		if (!text) {
+			return;
+		}
+
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).catch(function () {
+				kopiereUeberTextfeld(textarea, text);
+			});
+
+			return;
+		}
+
+		kopiereUeberTextfeld(textarea, text);
 	});
-})(jQuery);
+});
+
+/**
+ * Ausweichlösung für Browser ohne Clipboard-API.
+ */
+function kopiereUeberTextfeld(textarea, text) {
+	textarea.style.display = 'block';
+	textarea.value = text;
+	textarea.select();
+
+	try {
+		document.execCommand('copy');
+	} catch (err) {
+		window.console && window.console.error('Adressen: Kopieren nicht möglich', err);
+	}
+
+	textarea.style.display = 'none';
+}

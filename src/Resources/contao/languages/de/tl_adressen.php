@@ -1,6 +1,14 @@
 <?php
 
-/**
+declare(strict_types=1);
+
+/*
+ * Dieses Bundle stellt eine Adressen-Verwaltung für Contao 4.13 und Contao 5 bereit.
+ *
+ * @license LGPL-3.0-or-later
+ */
+
+/*
  * Backend-Modul: Übersetzungen im Eingabeformular
  */
 $GLOBALS['TL_LANG']['tl_adressen']['id'] = array('ID', 'ID dieser Adresse');
@@ -20,15 +28,6 @@ $GLOBALS['TL_LANG']['tl_adressen']['ort_view'] = array('PLZ und Ort veröffentli
 $GLOBALS['TL_LANG']['tl_adressen']['plz'] = array('PLZ', 'Geben Sie hier die Postleitzahl ein.');
 $GLOBALS['TL_LANG']['tl_adressen']['ort'] = array('Ort', 'Geben Sie hier den Ort ein.');
 
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_legend'] = 'Anschriften (neues Format)';
-$GLOBALS['TL_LANG']['tl_adressen']['adressen'] = array('Adressen', '');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_public_plzort'] = array('PLZ/Ort öffentlich', 'PLZ und Ort im Frontend anzeigen');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_plz'] = array('PLZ', 'Geben Sie hier die Postleitzahl ein.');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_ort'] = array('Ort', 'Geben Sie hier den Ort ein.');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_public_str'] = array('Straße öffentlich', 'Straße im Frontend anzeigen. Wird nur angezeigt, wenn auch PLZ und Ort öffentlich sind.');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_strasse'] = array('Straße', 'Geben Sie hier die Straße ein.');
-$GLOBALS['TL_LANG']['tl_adressen']['adressen_googlemap'] = array('Googlemap verlinken', 'Adresse mit GoogleMap verlinken');
-
 $GLOBALS['TL_LANG']['tl_adressen']['funktionen_legende'] = 'Funktionen und Kategorien';
 $GLOBALS['TL_LANG']['tl_adressen']['wertungsreferent'] = array('Wertungsreferent', 'Wählen Sie hier die Wertungsreferate der Person aus.');
 $GLOBALS['TL_LANG']['tl_adressen']['funktionen'] = array('Kategorien', 'Wählen Sie hier die Kategorien für die Person aus.');
@@ -39,11 +38,6 @@ $GLOBALS['TL_LANG']['tl_adressen']['telefon1'] = array('Telefon 1', 'Geben Sie h
 $GLOBALS['TL_LANG']['tl_adressen']['telefon2'] = array('Telefon 2', 'Geben Sie hier die zweite Telefonnummer ein.');
 $GLOBALS['TL_LANG']['tl_adressen']['telefon3'] = array('Telefon 3', 'Geben Sie hier die dritte Telefonnummer ein.');
 $GLOBALS['TL_LANG']['tl_adressen']['telefon4'] = array('Telefon 4', 'Geben Sie hier die vierte Telefonnummer ein.');
-
-$GLOBALS['TL_LANG']['tl_adressen']['telefone_legend'] = 'Telefonnummern (neues Format)';
-$GLOBALS['TL_LANG']['tl_adressen']['telefone'] = array('Nummern', '');
-$GLOBALS['TL_LANG']['tl_adressen']['telefone_public_num'] = array('Nummer öffentlich', 'Telefonnummer im Frontend anzeigen');
-$GLOBALS['TL_LANG']['tl_adressen']['telefone_nummer'] = array('Nummer', 'Geben Sie hier die Telefonnummer ein.');
 
 $GLOBALS['TL_LANG']['tl_adressen']['telefax_legende'] = 'Telefax';
 $GLOBALS['TL_LANG']['tl_adressen']['telefax_view'] = array('Telefax veröffentlichen', 'Telefaxnummern im Frontend anzeigen');
@@ -58,11 +52,6 @@ $GLOBALS['TL_LANG']['tl_adressen']['email3'] = array('E-Mail 3', 'Geben Sie hier
 $GLOBALS['TL_LANG']['tl_adressen']['email4'] = array('E-Mail 4', 'Geben Sie hier die vierte E-Mail-Adresse ein.');
 $GLOBALS['TL_LANG']['tl_adressen']['email5'] = array('E-Mail 5', 'Geben Sie hier die fünfte E-Mail-Adresse ein.');
 $GLOBALS['TL_LANG']['tl_adressen']['email6'] = array('E-Mail 6', 'Geben Sie hier die sechste E-Mail-Adresse ein.');
-
-$GLOBALS['TL_LANG']['tl_adressen']['emails_legend'] = 'E-Mails (neues Format)';
-$GLOBALS['TL_LANG']['tl_adressen']['emails'] = array('Adressen', '');
-$GLOBALS['TL_LANG']['tl_adressen']['emails_public_mail'] = array('E-Mail öffentlich', 'E-Mail-Adresse im Frontend anzeigen');
-$GLOBALS['TL_LANG']['tl_adressen']['emails_mail'] = array('Adresse', 'Geben Sie hier die E-Mail-Adresse ein.');
 
 $GLOBALS['TL_LANG']['tl_adressen']['bank_legend'] = 'Bankverbindung';
 $GLOBALS['TL_LANG']['tl_adressen']['inhaber'] = array('Kontoinhaber', 'Name des Kontoinhabers');
@@ -94,13 +83,10 @@ $GLOBALS['TL_LANG']['tl_adressen']['source'] = array('Quelle', 'Ursprüngliche Q
 $GLOBALS['TL_LANG']['tl_adressen']['aktiv_legende'] = 'Aktivieren';
 $GLOBALS['TL_LANG']['tl_adressen']['aktiv'] = array('Aktiv', 'Aktivieren oder deaktivieren Sie hier die Adresse.');
 
-$GLOBALS['TL_LANG']['tl_adressen']['publish_legend'] = 'Veröffentlichung';
-$GLOBALS['TL_LANG']['tl_adressen']['published'] = array('Veröffentlichen', 'Adresse veröffentlichen.');
-
 $GLOBALS['TL_LANG']['tl_adressen']['searchstring'] = array('Volltextsuche', 'Daten für Volltextsuche');
 
 
-/**
+/*
  * Buttons für Operationen
  */
 
@@ -114,7 +100,7 @@ $GLOBALS['TL_LANG']['tl_adressen']['delete'] = array('Adresse löschen', 'Adress
 $GLOBALS['TL_LANG']['tl_adressen']['toggle'] = array('Adresse veröffentlichen', 'Adresse %s veröffentlichen');
 $GLOBALS['TL_LANG']['tl_adressen']['show'] = array('Adressdetails anzeigen', 'Details der Adresse %s anzeigen');
 
-/**
+/*
  * Filter
  */
 
