@@ -14,15 +14,7 @@
 
 ## Fehler
 
-* In der Backend-Auflistung sind die Icons in der Spalte "Aktiv" zu groß geraten. Bitte auf
-  16x16 reduzieren.
-  *Ursache gefunden (2026-07-29):* Die vier Status-SVGs `grau.svg`, `gelb_rahmen.svg`,
-  `gruen_rahmen.svg` und `rot_rahmen.svg` tragen intrinsisch `width="512" height="512"`,
-  während das Modul-Icon `icon.svg` korrekt `width="16" height="16"` hat.
-  `Contao\Image::getHtml()` erzeugt daraus je nach Contao-Version unterschiedliches Markup,
-  weshalb das mitgegebene `width="16" height="16"` nicht zuverlässig greift. Saubere
-  Lösung: in den vier SVG-Dateien `width`/`height` auf 16 setzen (das `viewBox` bleibt
-  unverändert), dann stimmt die Größe unabhängig von der Contao-Version.
+* (derzeit nichts offen)
 
 ## Verbesserungen
 
@@ -44,3 +36,20 @@
   veraltet gilt und in Contao 6 wegfällt. Ersatz ist das Attribut `#[AsInsertTag]` — das
   gibt es aber erst ab Contao 5.1 und wäre mit Contao 4.13 nicht kompatibel. Umstellen,
   sobald die 4.13-Unterstützung aufgegeben wird.
+
+## Erledigt
+
+* ~~In der Backend-Auflistung sind die Icons in der Spalte "Aktiv" zu groß geraten. Bitte
+  auf 16x16 reduzieren.~~ Erledigt (4.1.1): Die vier Status-SVGs `grau.svg`,
+  `gelb_rahmen.svg`, `gruen_rahmen.svg` und `rot_rahmen.svg` trugen intrinsisch
+  `width="512" height="512"` (das Modul-Icon `icon.svg` dagegen korrekt 16). Jetzt auf 16
+  gesetzt, `viewBox` unverändert. Das bisher in `addIcon()` mitgegebene
+  `width="16" height="16"` half nur unter Contao 5 — dort hat das Attribut Vorrang, unter
+  Contao 4.13 gewinnt die Dateigröße. In beiden Versionen nachgemessen: alle vier
+  Statussymbole erzeugen jetzt genau eine Größenangabe `16x16`.
+
+## Hinweise
+
+* Die drei SVG-Dateien `gelb.svg`, `gruen.svg` und `rot.svg` (Varianten ohne Rahmen) werden
+  von keiner Stelle im Code referenziert. Falls sie nicht als Reserve gedacht sind, können
+  sie entfallen.

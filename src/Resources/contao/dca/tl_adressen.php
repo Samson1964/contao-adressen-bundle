@@ -760,8 +760,11 @@ class tl_adressen extends Backend
 			$title = 'Adresse deaktiviert';
 		}
 
-		// Spalte 0 (aktiv) in der Ausgabe überschreiben
-		$args[0] = '<span title="'.StringUtil::specialchars($title).'">'.Image::getHtml($icon, $title, 'width="16" height="16"').'</span>';
+		// Spalte 0 (aktiv) in der Ausgabe überschreiben.
+		// Die Größe steckt in den SVG-Dateien selbst (16x16); ein zusätzliches
+		// width/height-Attribut würde nur doppelte Attribute erzeugen und wirkte
+		// in Contao 4.13 ohnehin nicht, weil dort die Dateigröße Vorrang hat.
+		$args[0] = '<span title="'.StringUtil::specialchars($title).'">'.Image::getHtml($icon, $title).'</span>';
 
 		return $args;
 	}

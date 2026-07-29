@@ -1,5 +1,22 @@
 # Adressen Changelog
 
+## Version 4.1.1 (2026-07-29) - mit Claude Code
+
+* Fix: Die Statussymbole in der Spalte „Aktiv" der Adressliste wurden viel zu groß
+  dargestellt. Die vier SVG-Dateien `grau.svg`, `gelb_rahmen.svg`, `gruen_rahmen.svg` und
+  `rot_rahmen.svg` trugen intrinsisch `width="512" height="512"` (das Modul-Icon `icon.svg`
+  dagegen korrekt 16). Sie sind jetzt auf `width="16" height="16"` gesetzt, das `viewBox`
+  bleibt unverändert.
+  Das bisher in `tl_adressen::addIcon()` mitgegebene `width="16" height="16"` half nur
+  unter Contao 5: dort hat das Attribut Vorrang, unter Contao 4.13 gewinnt dagegen die in
+  der Datei hinterlegte Größe — deshalb war das Symbol dort 512 Pixel groß.
+* Change: Da die Größe jetzt in den Dateien selbst steht, gibt `addIcon()` kein
+  `width`/`height`-Attribut mehr mit. Das Markup enthielt vorher doppelte Attribute.
+
+**Nach dem Update `contao:assets:install` ausführen** (bzw. den Ordner
+`public/bundles/contaoadressen/` aktualisieren), sonst liegen die alten SVG-Dateien weiter
+im Web-Verzeichnis.
+
 ## Version 4.1.0 (2026-07-29) - mit Claude Code
 
 Die Einstellungen des Kontroll-Cronjobs stecken nicht mehr als Konstanten im Quelltext,
