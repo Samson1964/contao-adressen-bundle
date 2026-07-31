@@ -18,7 +18,7 @@ use Contao\System;
  * Felder brauchen deshalb keine "sql"-Definition.
  */
 $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] .= ';{adressen_legend:hide},adressen_defaultImage,adressen_ImageSize'
-	.';{adressen_cron_legend:hide},adressen_cron_absender,adressen_cron_absendername,adressen_cron_replyto,adressen_cron_betreff,adressen_cron_fotourl,adressen_cron_live,adressen_cron_testempfaenger';
+	.';{adressen_cron_legend:hide},adressen_cron_absender,adressen_cron_absendername,adressen_cron_replyto,adressen_cron_betreff,adressen_cron_signatur,adressen_cron_fotourl,adressen_cron_live,adressen_cron_testempfaenger';
 
 /*
  * Felder
@@ -86,6 +86,15 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_betreff'] = array
 	'exclude'                 => true,
 	'inputType'               => 'text',
 	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50')
+);
+
+// Grußformel am Ende der E-Mail; leer = der Absendername wird verwendet
+$GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_signatur'] = array
+(
+	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_signatur'],
+	'exclude'                 => true,
+	'inputType'               => 'textarea',
+	'eval'                    => array('allowHtml'=>true, 'decodeEntities'=>true, 'rows'=>3, 'tl_class'=>'clr long')
 );
 
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_fotourl'] = array

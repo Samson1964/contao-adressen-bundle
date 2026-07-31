@@ -1,5 +1,41 @@
 # Adressen Changelog
 
+## Version 4.2.0 (2026-07-31) - mit Claude Code
+
+Abgleich der beiden Cronjobs mit den Altskripten `/php/adressen/extract.php` und
+`/php/adressen/check.php`, die auf dem Livesystem noch per curl aufgerufen wurden.
+
+* Add: Einstellung **Grußformel** (`adressen_cron_signatur`) unter *System → Einstellungen
+  → „Adressen: Kontroll-E-Mails"*. HTML ist erlaubt, damit sich mehrzeilige Grußformeln wie
+  „Musterverband e.V.&lt;br&gt;Öffentlichkeitsarbeit" abbilden lassen. Bleibt das Feld
+  leer, wird wie bisher der Absendername verwendet.
+* Change: Die Grußformel der Kontroll-E-Mail stammt jetzt aus diesem Feld statt aus dem
+  Absendernamen. Damit lässt sich die E-Mail des Altskripts wortgleich nachbilden.
+
+### Abgleich mit den Altskripten
+
+Der E-Mail-Text des Cronjobs wurde in Contao 4.13.58 und Contao 5.7.7 gegen die Ausgabe von
+`check.php` geprüft: Betreff, Anrede, Einleitung, alle Feldzeilen, Spambot- und
+Foto-Hinweise, Seiten-Auflistung, Grußformel und Schlusssatz stimmen überein.
+
+Gewollt abweichend bleiben:
+
+* Die Felder **Google+, ICQ, Yahoo, AIM und MSN** entfallen – diese Spalten gibt es in
+  `tl_adressen` nicht mehr. An ihrer Stelle stehen Instagram, Skype, WhatsApp, Threema und
+  Telegram.
+* Die Fotoanzeige richtet sich nach `singleSRC` statt nach der mit 4.0.0 entfernten Spalte
+  `addImage`.
+* `extract.php` setzte die URL fest als `'http://'.$domain.'/'.$alias.'.html'` zusammen und
+  schrieb **eine Zeile je Fundstelle**. Der Cronjob nutzt `PageModel::getAbsoluteUrl()`
+  (korrektes Protokoll, echtes URL-Suffix) und fasst Mehrfachnennungen derselben Seite
+  zusammen. Die Anzeige „eingebunden auf N Seiten" kann dadurch kleinere Zahlen zeigen.
+
+### Intervalle
+
+Unverändert und wie gewünscht: `ExtrahiereAdressen` einmal täglich (`daily`),
+`KontrolliereAdressen` am 1. Januar, April, Juli und Oktober um 04:00 Uhr
+(`0 4 1 */3 *`).
+
 ## Version 4.1.2 (2026-07-29) - mit Claude Code
 
 * Delete: Die drei ungenutzten Symbole `gelb.svg`, `gruen.svg` und `rot.svg` (Varianten

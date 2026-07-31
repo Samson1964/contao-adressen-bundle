@@ -7,10 +7,26 @@
   `iban` auf 34 Zeichen) → **Produktions-Cache neu bauen** (Service-IDs und
   `services.yaml` haben sich geändert).
 * **Nach dem Deploy die Cron-Einstellungen pflegen:** *System → Einstellungen →
-  „Adressen: Kontroll-E-Mails"*. Ohne Absenderadresse und Test-Empfänger verschickt der
-  Kontroll-Cronjob nichts. Erst der Haken „Kontroll-E-Mails scharfschalten" sendet an die
-  echten Kontakte. Dabei klären, ob die Adressen auf `schachbund.de` oder `schachbund.com`
-  lauten sollen — im Quelltext standen bis 4.0.0 beide Varianten nebeneinander.
+  „Adressen: Kontroll-E-Mails"*. Die Werte aus dem Altskript `/php/adressen/check.php`:
+
+  | Feld | Wert |
+  |---|---|
+  | Absenderadresse | `server@schachbund.de` |
+  | Absendername | `Deutscher Schachbund` |
+  | Antwortadresse | `Deutscher Schachbund e.V. <adressen@schachbund.de>` |
+  | Betreff | `[Deutscher Schachbund] Adressen-Überprüfung` |
+  | Grußformel | `Deutscher Schachbund e.V.<br>Öffentlichkeitsarbeit` |
+  | Basis-URL für Fotos | `https://www.schachbund.de/` |
+  | Test-Empfänger | `Frank Hoppe <webmaster@schachbund.de>` |
+
+  Den Haken „Kontroll-E-Mails scharfschalten" erst setzen, wenn eine Testmail geprüft ist.
+
+* **Hetzner-Cronjobs umstellen und Altskripte entfernen.** Die beiden curl-Aufrufe auf
+  `/php/adressen/extract.php` und `/php/adressen/check.php` durch einen einzigen
+  Contao-Cron ersetzen (`* * * * * php .../vendor/bin/contao-console contao:cron`) und den
+  Ordner `/php/adressen/` löschen. **Frist: 1. Oktober 2026, 04:00** – bis dahin würde das
+  alte `check.php` (`$debugmode = false`) erneut an alle echten Kontakte schreiben, ohne
+  den Sicherheitsschalter des Bundles zu beachten.
 
 ## Fehler
 

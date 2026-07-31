@@ -105,6 +105,7 @@ konfiguriert:
 | Absendername | Wird als Absender angezeigt und dient als Grußformel am Ende der E-Mail. |
 | Antwortadresse | Leer lassen, um die Absenderadresse zu verwenden. Schreibweise mit Namen erlaubt. |
 | Betreff | Betreffzeile der E-Mail. |
+| Grußformel | Steht am Ende der E-Mail, HTML erlaubt. Leer = Absendername. |
 | Basis-URL für Fotos | Vollständige Adresse der Website. Leer lassen, um kein Foto anzuzeigen. |
 | Kontroll-E-Mails scharfschalten | Erst mit Haken gehen die E-Mails an die echten Kontakte. |
 | Test-Empfänger | Empfänger im Testmodus. |

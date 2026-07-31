@@ -247,12 +247,22 @@ class KontrolliereAdressen
 
 		$strText .= '</ul>';
 
-		// Als Grußformel dient der in den Einstellungen hinterlegte Absendername
-		$strName = self::einstellung('adressen_cron_absendername');
+		// Grußformel: bevorzugt das eigene Feld (HTML erlaubt, z.B. mit <br>),
+		// ersatzweise der Absendername
+		$strSignatur = self::einstellung('adressen_cron_signatur');
 
-		if ($strName !== '')
+		if ($strSignatur !== '')
 		{
-			$strText .= '<p>'.StringUtil::specialchars($strName).'</p>';
+			$strText .= '<p>'.$strSignatur.'</p>';
+		}
+		else
+		{
+			$strName = self::einstellung('adressen_cron_absendername');
+
+			if ($strName !== '')
+			{
+				$strText .= '<p>'.StringUtil::specialchars($strName).'</p>';
+			}
 		}
 
 		$strText .= '<p><i>Dies ist eine automatisch generierte E-Mail.</i></p>';
