@@ -1,5 +1,36 @@
 # Adressen Changelog
 
+## Version 4.3.0 (2026-08-02) - mit Claude Code
+
+Prüfung auf **PHP 8.3** und **Contao 4.13 / 5.7** sowie Auslagerung der letzten fest
+verdrahteten deutschen Texte.
+
+### Geprüft, nichts zu beheben
+
+Alle Codepfade des Bundles wurden unter **PHP 8.3.31** gegen **Contao 4.13.58** und
+**Contao 5.7.7** ausgeführt – Insert-Tag (mit/ohne Foto, unbekannte ID), Inhaltselement,
+beide Frontend-Module (auch mit Array-Parametern), sämtliche DCA-Callbacks, beide Cronjobs
+und der CSV-Import. Ergebnis: **31 von 31 Pfaden ohne Ausnahme und ohne eine einzige
+PHP-Meldung** (Warning, Notice oder Deprecation). Zusätzlich wurde statisch auf die in
+PHP 8.1–8.4 veralteten Konstrukte geprüft (`${}`-Interpolation, `utf8_encode`,
+implizit nullable Parameter, dynamische Properties, `FILTER_SANITIZE_STRING` u. a.) –
+keine Fundstelle.
+
+### Textbausteine in die Sprachdatei ausgelagert
+
+* Add: `$GLOBALS['TL_LANG']['MSC']['adressen_cron_felder']` – Beschriftungen der in der
+  Kontroll-E-Mail aufgelisteten Felder (`Name`, `Vorname`, `Telefon 1`, `Standardfoto` …).
+* Add: `$GLOBALS['TL_LANG']['MSC']['adressen_cron_texte']` – Spambot-Hinweis, die beiden
+  Hinweise zum Standardfoto, die Einleitung der Seiten-Auflistung und der Schlusssatz.
+* Add: `$GLOBALS['TL_LANG']['MSC']['adressen_suche']` – sämtliche Beschriftungen des
+  Suchmoduls, die bisher direkt im Template `adresse_ergebnisse.html5` standen.
+* Change: `Cron\KontrolliereAdressen` führt die Feldlisten nur noch als Spaltennamen; die
+  Beschriftung kommt aus der Sprachdatei, mit eingebauter Vorgabe als Rückfallebene.
+
+Der erzeugte E-Mail-Text wurde nach dem Umbau erneut gegen das Altskript
+`/php/adressen/check.php` geprüft (26 Einzelprüfungen, beide Contao-Versionen):
+**wortgleich**.
+
 ## Version 4.2.0 (2026-07-31) - mit Claude Code
 
 Abgleich der beiden Cronjobs mit den Altskripten `/php/adressen/extract.php` und

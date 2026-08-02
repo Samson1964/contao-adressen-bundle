@@ -45,42 +45,49 @@ class KontrolliereAdressen
 	private const BETREFF_STANDARD = 'Adressen-Überprüfung';
 
 	/**
-	 * Felder, die in der E-Mail aufgelistet werden: [Beschriftung => Spalte]
+	 * Spalten aus tl_adressen, die im ersten Block der E-Mail aufgelistet werden.
+	 * Die Beschriftungen stehen in der Sprachdatei unter
+	 * $GLOBALS['TL_LANG']['MSC']['adressen_cron_felder'].
+	 *
+	 * @var list<string>
 	 */
 	private const FELDER_ADRESSE = array
 	(
-		'Name'       => 'nachname',
-		'Vorname'    => 'vorname',
-		'Titel'      => 'titel',
-		'Firma'      => 'firma',
-		'Straße'     => 'strasse',
-		'PLZ'        => 'plz',
-		'Ort'        => 'ort',
-		'Telefon 1'  => 'telefon1',
-		'Telefon 2'  => 'telefon2',
-		'Telefon 3'  => 'telefon3',
-		'Telefon 4'  => 'telefon4',
-		'Fax 1'      => 'telefax1',
-		'Fax 2'      => 'telefax2',
-		'E-Mail 1'   => 'email1',
-		'E-Mail 2'   => 'email2',
-		'E-Mail 3'   => 'email3',
-		'E-Mail 4'   => 'email4',
-		'E-Mail 5'   => 'email5',
-		'E-Mail 6'   => 'email6',
+		'nachname', 'vorname', 'titel', 'firma', 'strasse', 'plz', 'ort',
+		'telefon1', 'telefon2', 'telefon3', 'telefon4',
+		'telefax1', 'telefax2',
+		'email1', 'email2', 'email3', 'email4', 'email5', 'email6',
 	);
 
+	/**
+	 * Spalten für den zweiten Block (Homepage und soziale Netzwerke).
+	 *
+	 * @var list<string>
+	 */
 	private const FELDER_WEB = array
 	(
-		'Homepage'  => 'homepage',
-		'Facebook'  => 'facebook',
-		'Twitter'   => 'twitter',
-		'Instagram' => 'instagram',
-		'Skype'     => 'skype',
-		'WhatsApp'  => 'whatsapp',
-		'Threema'   => 'threema',
-		'Telegram'  => 'telegram',
-		'IRC'       => 'irc',
+		'homepage', 'facebook', 'twitter', 'instagram',
+		'skype', 'whatsapp', 'threema', 'telegram', 'irc',
+	);
+
+	/**
+	 * Ersatzbeschriftungen, falls die Sprachdatei nicht geladen werden konnte.
+	 *
+	 * @var array<string, string>
+	 */
+	private const FELDER_STANDARD = array
+	(
+		'nachname'  => 'Name',      'vorname'   => 'Vorname',   'titel'     => 'Titel',
+		'firma'     => 'Firma',     'strasse'   => 'Straße',    'plz'       => 'PLZ',
+		'ort'       => 'Ort',
+		'telefon1'  => 'Telefon 1', 'telefon2'  => 'Telefon 2', 'telefon3'  => 'Telefon 3',
+		'telefon4'  => 'Telefon 4', 'telefax1'  => 'Fax 1',     'telefax2'  => 'Fax 2',
+		'email1'    => 'E-Mail 1',  'email2'    => 'E-Mail 2',  'email3'    => 'E-Mail 3',
+		'email4'    => 'E-Mail 4',  'email5'    => 'E-Mail 5',  'email6'    => 'E-Mail 6',
+		'homepage'  => 'Homepage',  'facebook'  => 'Facebook',  'twitter'   => 'Twitter',
+		'instagram' => 'Instagram', 'skype'     => 'Skype',     'whatsapp'  => 'WhatsApp',
+		'threema'   => 'Threema',   'telegram'  => 'Telegram',  'irc'       => 'IRC',
+		'foto'      => 'Standardfoto', 'text'   => 'Profiltext',
 	);
 
 	public function __construct(
@@ -221,7 +228,7 @@ class KontrolliereAdressen
 		$strText .= '<p>'.($GLOBALS['TL_LANG']['MSC']['adressen_cron_einleitung'] ?? '').'</p>';
 
 		$strText .= self::erzeugeListe($objAdresse, self::FELDER_ADRESSE);
-		$strText .= '<p><i>(E-Mail-Adressen werden für Spambots nicht lesbar dargestellt!)</i></p>'."\n";
+		$strText .= '<p><i>'.self::text('spamschutz').'</i></p>'."\n";
 
 		$strHinweis = '';
 
@@ -232,11 +239,11 @@ class KontrolliereAdressen
 		$strText .= '<p><i>'.$strHinweis.'</i></p>'."\n";
 
 		$strText .= '<ul>';
-		$strText .= '<li>Profiltext: <b>'.StringUtil::specialchars((string) $objAdresse->text).'</b></li>'."\n";
+		$strText .= '<li>'.self::feldname('text').': <b>'.StringUtil::specialchars((string) $objAdresse->text).'</b></li>'."\n";
 		$strText .= '</ul>';
 
 		// Einbindungen (Spalte links) als HTML-Liste ausgeben
-		$strText .= '<p>Ihre Adresse wird auf folgenden Seiten angezeigt:</p>';
+		$strText .= '<p>'.self::text('seiten').'</p>';
 		$strText .= '<ul>';
 
 		foreach (array_filter(array_map('trim', explode("\n", (string) $objAdresse->links))) as $strLink)
@@ -265,7 +272,7 @@ class KontrolliereAdressen
 			}
 		}
 
-		$strText .= '<p><i>Dies ist eine automatisch generierte E-Mail.</i></p>';
+		$strText .= '<p><i>'.self::text('automatisch').'</i></p>';
 		$strText .= '</body>';
 		$strText .= '</html>';
 
@@ -273,9 +280,9 @@ class KontrolliereAdressen
 	}
 
 	/**
-	 * Erzeugt eine vollständige <ul>-Liste aus den angegebenen Feldern.
+	 * Erzeugt eine vollständige <ul>-Liste aus den angegebenen Spalten.
 	 *
-	 * @param array<string, string> $arrFelder
+	 * @param list<string> $arrFelder
 	 */
 	private static function erzeugeListe(object $objAdresse, array $arrFelder): string
 	{
@@ -283,20 +290,45 @@ class KontrolliereAdressen
 	}
 
 	/**
-	 * Erzeugt die <li>-Einträge aus den angegebenen Feldern.
+	 * Erzeugt die <li>-Einträge aus den angegebenen Spalten.
 	 *
-	 * @param array<string, string> $arrFelder
+	 * @param list<string> $arrFelder
 	 */
 	private static function erzeugeEintraege(object $objAdresse, array $arrFelder): string
 	{
 		$strText = '';
 
-		foreach ($arrFelder as $strLabel => $strFeld)
+		foreach ($arrFelder as $strFeld)
 		{
-			$strText .= '<li>'.$strLabel.': <b>'.StringUtil::specialchars((string) $objAdresse->$strFeld).'</b></li>'."\n";
+			$strText .= '<li>'.self::feldname($strFeld).': <b>'.StringUtil::specialchars((string) $objAdresse->$strFeld).'</b></li>'."\n";
 		}
 
 		return $strText;
+	}
+
+	/**
+	 * Liefert die Beschriftung einer Spalte für die E-Mail.
+	 *
+	 * Quelle ist $GLOBALS['TL_LANG']['MSC']['adressen_cron_felder'][<Spalte>];
+	 * fehlt der Eintrag, greift die eingebaute Vorgabe aus FELDER_STANDARD.
+	 */
+	private static function feldname(string $strFeld): string
+	{
+		return (string) ($GLOBALS['TL_LANG']['MSC']['adressen_cron_felder'][$strFeld]
+			?? self::FELDER_STANDARD[$strFeld]
+			?? $strFeld);
+	}
+
+	/**
+	 * Liefert einen Textbaustein der E-Mail aus der Sprachdatei.
+	 *
+	 * Quelle ist $GLOBALS['TL_LANG']['MSC']['adressen_cron_texte'][<Schlüssel>].
+	 * Fehlt der Eintrag, wird ein leerer String zurückgegeben – die Sprachdatei
+	 * des Bundles liefert alle Schlüssel mit.
+	 */
+	private static function text(string $strKey): string
+	{
+		return (string) ($GLOBALS['TL_LANG']['MSC']['adressen_cron_texte'][$strKey] ?? '');
 	}
 
 	/**
@@ -306,11 +338,12 @@ class KontrolliereAdressen
 	 */
 	private function erzeugeFotoEintrag(object $objAdresse, string &$strHinweis): string
 	{
-		$strHinweis = 'Bitte senden Sie uns ein Foto oder einen Link zu einem Foto, welches wir verwenden dürfen.';
+		$strHinweis = self::text('foto_fehlt');
+		$strLeer    = '<li>'.self::feldname('foto').': <b>-</b></li>'."\n";
 
 		if (!$objAdresse->singleSRC)
 		{
-			return '<li>Standardfoto: <b>-</b></li>'."\n";
+			return $strLeer;
 		}
 
 		// Ohne Basis-URL lässt sich das Foto in der E-Mail nicht anzeigen
@@ -318,7 +351,7 @@ class KontrolliereAdressen
 
 		if ($strBasisUrl === '')
 		{
-			return '<li>Standardfoto: <b>-</b></li>'."\n";
+			return $strLeer;
 		}
 
 		$objModel      = FilesModel::findByUuid($objAdresse->singleSRC);
@@ -326,13 +359,14 @@ class KontrolliereAdressen
 
 		if ($objModel === null || !$objModel->path || !is_file($strProjectDir.'/'.$objModel->path))
 		{
-			return '<li>Standardfoto: <b>-</b></li>'."\n";
+			return $strLeer;
 		}
 
-		$strHinweis = 'Das Standardfoto wird wie im Vorschaubild verkleinert angezeigt, wenn die Fotoanzeige aktiviert ist. Statt des Standardfotos kann auf den jeweiligen Seiten auch ein anderes Foto eingebunden sein.';
+		$strHinweis = self::text('foto_vorhanden');
 
 		$strFoto = StringUtil::specialchars(rtrim($strBasisUrl, '/').'/'.$objModel->path);
+		$strName = self::feldname('foto');
 
-		return '<li>Standardfoto: <a href="'.$strFoto.'"><img src="'.$strFoto.'" height="80" alt="Standardfoto"></a></li>'."\n";
+		return '<li>'.$strName.': <a href="'.$strFoto.'"><img src="'.$strFoto.'" height="80" alt="'.$strName.'"></a></li>'."\n";
 	}
 }

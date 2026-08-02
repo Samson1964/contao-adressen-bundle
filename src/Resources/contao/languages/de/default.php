@@ -19,6 +19,72 @@ $GLOBALS['TL_LANG']['CTE']['adressen'] = array('Adresse', 'Eine Adresse einfüge
 $GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede'] = 'Liebe Schachfreundin, lieber Schachfreund,';
 $GLOBALS['TL_LANG']['MSC']['adressen_cron_einleitung'] = 'in regelmäßigen Abständen werden die in unserer internen Adressen-Datenbank gespeicherten Datensätze automatisch mittels der dort hinterlegten E-Mail-Adresse(n) überprüft.<br>Bitte nehmen Sie sich kurz Zeit und werfen Sie einen Blick auf die nachfolgend aufgeführten Daten. Melden Sie uns Änderungen, indem Sie diese E-Mail beantworten.';
 
+/*
+ * Beschriftungen des Frontend-Moduls „Adressensuche"
+ * (Template adresse_ergebnisse.html5)
+ */
+$GLOBALS['TL_LANG']['MSC']['adressen_suche'] = array
+(
+	'suchbegriff'  => 'Suchbegriff:',
+	'mitglied_in'  => 'Mitglied in',
+	'verknuepfung' => 'Verknüpfung:',
+	'und'          => 'UND',
+	'oder'         => 'ODER',
+	'nur_emails'   => 'Nur E-Mails anzeigen',
+	'eingeschaltet' => 'Eingeschaltet',
+	'suchen'       => 'Suchen',
+	'kopieren'     => 'Ausgewählte Adressen kopieren',
+	// %s = Suchbegriff, %d = Anzahl der Treffer
+	'treffer'      => 'Du suchtest nach "<i>%s</i>". Wir haben %d Datensätze in unserer Datenbank.',
+	'kein_treffer' => 'Du suchtest nach "<i>%s</i>". Wir haben leider keine Adresse gefunden.',
+	'hinweis'      => 'Die Suche erfolgt in den Feldern Firma, Vorname, Nachname, PLZ, Ort, Straße, allen Telefon- und Faxnummern, allen E-Mail-Adressen, dem öffentlichen Profil und den internen Bemerkungen. Groß- und Kleinschreibung ist egal, ebenso Umlaute und Sonderzeichen.',
+);
+
+// Weitere Textbausteine der Kontroll-E-Mail
+$GLOBALS['TL_LANG']['MSC']['adressen_cron_texte'] = array
+(
+	'spamschutz'     => '(E-Mail-Adressen werden für Spambots nicht lesbar dargestellt!)',
+	'foto_fehlt'     => '(Bitte senden Sie uns ein Foto oder einen Link zu einem Foto, welches wir verwenden dürfen.)',
+	'foto_vorhanden' => '(Das Standardfoto wird wie im Vorschaubild verkleinert angezeigt, wenn die Fotoanzeige aktiviert ist. Statt des Standardfotos kann auf den jeweiligen Seiten auch ein anderes Foto eingebunden sein.)',
+	'seiten'         => 'Ihre Adresse wird auf folgenden Seiten angezeigt:',
+	'automatisch'    => 'Dies ist eine automatisch generierte E-Mail.',
+);
+
+// Beschriftungen der in der Kontroll-E-Mail aufgelisteten Felder
+$GLOBALS['TL_LANG']['MSC']['adressen_cron_felder'] = array
+(
+	'nachname'  => 'Name',
+	'vorname'   => 'Vorname',
+	'titel'     => 'Titel',
+	'firma'     => 'Firma',
+	'strasse'   => 'Straße',
+	'plz'       => 'PLZ',
+	'ort'       => 'Ort',
+	'telefon1'  => 'Telefon 1',
+	'telefon2'  => 'Telefon 2',
+	'telefon3'  => 'Telefon 3',
+	'telefon4'  => 'Telefon 4',
+	'telefax1'  => 'Fax 1',
+	'telefax2'  => 'Fax 2',
+	'email1'    => 'E-Mail 1',
+	'email2'    => 'E-Mail 2',
+	'email3'    => 'E-Mail 3',
+	'email4'    => 'E-Mail 4',
+	'email5'    => 'E-Mail 5',
+	'email6'    => 'E-Mail 6',
+	'homepage'  => 'Homepage',
+	'facebook'  => 'Facebook',
+	'twitter'   => 'Twitter',
+	'instagram' => 'Instagram',
+	'skype'     => 'Skype',
+	'whatsapp'  => 'WhatsApp',
+	'threema'   => 'Threema',
+	'telegram'  => 'Telegram',
+	'irc'       => 'IRC',
+	'foto'      => 'Standardfoto',
+	'text'      => 'Profiltext',
+);
+
 $GLOBALS['TL_LANG']['tl_adressen']['verbaende'] = array
 (
 	'00000' => '00000 Deutscher Schachbund',

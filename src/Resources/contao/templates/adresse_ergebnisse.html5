@@ -1,29 +1,30 @@
 <?php $GLOBALS['TL_JAVASCRIPT']['adressen'] = 'bundles/contaoadressen/js/adressen.js|static'; ?>
+<?php $L = $GLOBALS['TL_LANG']['MSC']['adressen_suche'] ?? array(); ?>
 
 <div class="<?= $this->class ?> block"<?= $this->cssID ?><?php if ($this->style): ?> style="<?= $this->style ?>"<?php endif; ?>>
 
 	<div class="suchformular">
 		<form action="" method="get">
-			<label for="adr_suche">Suchbegriff:</label> <input type="text" id="adr_suche" name="s" class="text" value="<?= \Contao\StringUtil::specialchars($this->Suchbegriff) ?>">
+			<label for="adr_suche"><?= $L['suchbegriff'] ?? 'Suchbegriff:' ?></label> <input type="text" id="adr_suche" name="s" class="text" value="<?= \Contao\StringUtil::specialchars($this->Suchbegriff) ?>">
 			<fieldset>
-				<legend>Mitglied in</legend>
+				<legend><?= $L['mitglied_in'] ?? 'Mitglied in' ?></legend>
 				<ul>
 				<?php foreach($this->Funktionen as $key => $value): ?>
 					<li><label><input type="checkbox" name="funktion[]" value="<?= $key ?>"<?php if(in_array($key, $this->Funktionsauswahl)): ?> checked<?php endif; ?>> <?= \Contao\StringUtil::specialchars($value) ?></label></li>
 				<?php endforeach; ?>
 				</ul>
-				<div style="clear:both; padding-top:5px;">Verknüpfung:
-					<label><input type="radio" name="join" value="and"<?php if($this->Verknuepfung == 'AND'): ?> checked<?php endif; ?>> UND</label>
-					<label><input type="radio" name="join" value="or"<?php if($this->Verknuepfung == 'OR'): ?> checked<?php endif; ?>> ODER</label>
+				<div style="clear:both; padding-top:5px;"><?= $L['verknuepfung'] ?? 'Verknüpfung:' ?>
+					<label><input type="radio" name="join" value="and"<?php if($this->Verknuepfung == 'AND'): ?> checked<?php endif; ?>> <?= $L['und'] ?? 'UND' ?></label>
+					<label><input type="radio" name="join" value="or"<?php if($this->Verknuepfung == 'OR'): ?> checked<?php endif; ?>> <?= $L['oder'] ?? 'ODER' ?></label>
 				</div>
 			</fieldset>
 			<fieldset>
-				<legend>Nur E-Mails anzeigen</legend>
+				<legend><?= $L['nur_emails'] ?? 'Nur E-Mails anzeigen' ?></legend>
 				<ul>
-					<li><label><input type="checkbox" name="email" value="1"<?php if($this->Liteversion): ?> checked<?php endif; ?>> Eingeschaltet</label></li>
+					<li><label><input type="checkbox" name="email" value="1"<?php if($this->Liteversion): ?> checked<?php endif; ?>> <?= $L['eingeschaltet'] ?? 'Eingeschaltet' ?></label></li>
 				</ul>
 			</fieldset>
-			<input type="submit" class="submit" value="Suchen">
+			<input type="submit" class="submit" value="<?= \Contao\StringUtil::specialchars($L['suchen'] ?? 'Suchen') ?>">
 		</form>
 	</div>
 	<div style="clear:both"></div>
@@ -31,7 +32,7 @@
 	<?php if ($this->Gesucht): ?>
 		<?php if ($this->Ergebnisliste): ?>
 			<div class="trefferliste">
-				<p>Du suchtest nach "<i><?= \Contao\StringUtil::specialchars($this->Suchbegriff) ?></i>". Wir haben <?= count($this->Ergebnisliste) ?> Datensätze in unserer Datenbank.</p>
+				<p><?= sprintf($L['treffer'] ?? 'Du suchtest nach "<i>%s</i>". Wir haben %d Datensätze in unserer Datenbank.', \Contao\StringUtil::specialchars($this->Suchbegriff), count($this->Ergebnisliste)) ?></p>
 				<?php if($this->Liteversion): ?>
 					<?php foreach($this->Ergebnisliste as $item): ?>
 						<?php $checked = false; ?>
@@ -44,7 +45,7 @@
 						<?php endfor; ?>
 					<?php endforeach; ?>
 					<textarea id="kopiertext" style="display:none;"></textarea>
-					<button type="button" id="kopieren">Ausgewählte Adressen kopieren</button>
+					<button type="button" id="kopieren"><?= $L['kopieren'] ?? 'Ausgewählte Adressen kopieren' ?></button>
 				<?php else: ?>
 					<ul>
 					<?php foreach($this->Ergebnisliste as $item): ?>
@@ -82,13 +83,13 @@
 			</div>
 		<?php else: ?>
 			<div class="trefferliste">
-				<p>Du suchtest nach "<i><?= \Contao\StringUtil::specialchars($this->Suchbegriff) ?></i>". Wir haben leider keine Adresse gefunden.</p>
+				<p><?= sprintf($L['kein_treffer'] ?? 'Du suchtest nach "<i>%s</i>". Wir haben leider keine Adresse gefunden.', \Contao\StringUtil::specialchars($this->Suchbegriff)) ?></p>
 			</div>
 		<?php endif; ?>
 	<?php endif; ?>
 
 	<div class="hinweis">
-		Die Suche erfolgt in den Feldern Firma, Vorname, Nachname, PLZ, Ort, Straße, allen Telefon- und Faxnummern, allen E-Mail-Adressen, dem öffentlichen Profil und den internen Bemerkungen. Groß- und Kleinschreibung ist egal, ebenso Umlaute und Sonderzeichen.
+		<?= $L['hinweis'] ?? '' ?>
 	</div>
 
 </div>

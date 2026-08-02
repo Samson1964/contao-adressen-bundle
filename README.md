@@ -9,8 +9,8 @@ aus – als Inhaltselement, über einen Insert-Tag oder über zwei Frontend-Modu
 
 | | |
 |---|---|
-| PHP | ^8.1 |
-| Contao | ^4.13 \|\| ^5.0 |
+| PHP | ^8.1 (geprüft mit 8.3) |
+| Contao | ^4.13 \|\| ^5.0 (geprüft mit 4.13.58 und 5.7.7) |
 
 ## Installation
 
@@ -113,9 +113,17 @@ konfiguriert:
 Fehlt die Absenderadresse – oder im Testmodus der Test-Empfänger – bricht der Cronjob ab
 und schreibt eine Meldung in das Log `contao.cron`.
 
-Anrede und Einleitungstext der E-Mail stehen in der Sprachdatei
-(`$GLOBALS['TL_LANG']['MSC']['adressen_cron_anrede']` und `…_einleitung`) und lassen sich
-über eine eigene Sprachdatei im Projekt überschreiben.
+Sämtliche Texte der E-Mail stehen in der Sprachdatei und lassen sich über eine eigene
+Sprachdatei im Projekt überschreiben:
+
+| Schlüssel unter `TL_LANG['MSC']` | Inhalt |
+|---|---|
+| `adressen_cron_anrede` | Anrede |
+| `adressen_cron_einleitung` | Einleitungsabsatz |
+| `adressen_cron_felder` | Beschriftungen der aufgelisteten Felder |
+| `adressen_cron_texte` | Spambot- und Foto-Hinweise, Seiten-Einleitung, Schlusssatz |
+
+Die Beschriftungen des Suchmoduls stehen unter `TL_LANG['MSC']['adressen_suche']`.
 
 ## Templates
 

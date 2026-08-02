@@ -34,17 +34,12 @@
 
 ## Verbesserungen
 
-* **Restliche fest verdrahtete Texte der Kontroll-E-Mail in die Sprachdatei holen.** Mit
-  4.1.0 sind Anrede und Einleitung nach `$GLOBALS['TL_LANG']['MSC']['adressen_cron_*']`
-  gewandert. Noch im Quelltext von `Cron\KontrolliereAdressen` stehen: die Feldnamen der
-  Auflistung (`Name`, `Vorname`, `Telefon 1` …), die Hinweise zum Standardfoto, der Satz
-  „Ihre Adresse wird auf folgenden Seiten angezeigt:", der Spambot-Hinweis und
-  „Dies ist eine automatisch generierte E-Mail.".
-* **Bedienoberfläche des Suchmoduls übersetzbar machen.** `adresse_ergebnisse.html5`
-  enthält die Beschriftungen („Suchbegriff:", „Mitglied in", „Verknüpfung", „Suchen",
-  „Wir haben X Datensätze …") direkt im Template statt in einer Sprachdatei.
 * **`ce_adressen_default.html5` prüfen.** Das Template ist eine nahezu identische Kopie von
   `ce_adressen.html5`. Wenn es niemand als `customTpl` nutzt, kann es entfallen.
+* **Klassennamen mit Unterstrich.** `Classes\Adressen_Backend` und
+  `Classes\Adressen_Frontend` verstoßen gegen die CamelCase-Regel aus der `CLAUDE.md`.
+  Eine Umbenennung wäre ein Bruch für fremden Code, der die Klassen referenziert, und
+  gehört daher in einen Major-Sprung.
 
 ## Für Contao 6 vormerken
 
@@ -55,6 +50,13 @@
 
 ## Erledigt
 
+* ~~Restliche fest verdrahtete Texte der Kontroll-E-Mail in die Sprachdatei holen.~~
+  Erledigt (4.3.0): Feldbeschriftungen unter
+  `$GLOBALS['TL_LANG']['MSC']['adressen_cron_felder']`, übrige Textbausteine unter
+  `…['adressen_cron_texte']`. Der erzeugte E-Mail-Text wurde danach erneut gegen das
+  Altskript geprüft – wortgleich.
+* ~~Bedienoberfläche des Suchmoduls übersetzbar machen.~~ Erledigt (4.3.0): alle
+  Beschriftungen unter `$GLOBALS['TL_LANG']['MSC']['adressen_suche']`.
 * ~~In der Backend-Auflistung sind die Icons in der Spalte "Aktiv" zu groß geraten. Bitte
   auf 16x16 reduzieren.~~ Erledigt (4.1.1): Die vier Status-SVGs `grau.svg`,
   `gelb_rahmen.svg`, `gruen_rahmen.svg` und `rot_rahmen.svg` trugen intrinsisch
