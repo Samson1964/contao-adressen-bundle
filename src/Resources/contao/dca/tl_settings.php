@@ -9,7 +9,9 @@ declare(strict_types=1);
  */
 
 use Contao\BackendUser;
+use Contao\StringUtil;
 use Contao\System;
+use Contao\Validator;
 
 /*
  * Palette erweitern
@@ -32,6 +34,19 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_defaultImage'] = array
 		'filesOnly'           => true,
 		'fieldType'           => 'radio',
 		'tl_class'            => 'w50 clr'
+	),
+	// Der Dateibaum liefert die UUID als 16 Byte Binärwert. Die Einstellungen
+	// landen aber in system/config/localconfig.php, also in einer PHP-Datei,
+	// die den Binärwert nicht unbeschadet übersteht: Nullbytes und Backslashes
+	// gehen dabei verloren, und FilesModel::findByUuid() findet die Datei
+	// später nicht mehr. Deshalb wird hier in die lesbare Schreibweise
+	// umgewandelt, die findByUuid() ebenso versteht.
+	'save_callback' => array
+	(
+		static function ($varValue)
+		{
+			return Validator::isBinaryUuid($varValue) ? StringUtil::binToUuid($varValue) : $varValue;
+		}
 	)
 );
 
@@ -54,6 +69,12 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_ImageSize'] = array
  * Der Cronjob verschickt vierteljährlich an alle aktiven, eingebundenen
  * Adressen eine E-Mail mit den gespeicherten Daten. Ohne gesetzte
  * Absenderadresse verschickt er nichts.
+ *
+ * Hinweis zu den save_callbacks: Contao schickt die Eingaben durch
+ * Input::post(), das trotz eval.decodeEntities noch stripTags() ausführt. Aus
+ * einer Angabe wie "DSB-Presse <presse@example.com>" wird dabei
+ * "DSB-Presse &lt;presse@example.com>", womit der Versand keine gültige
+ * Adresse mehr hätte. Die Rückrufe wandeln deshalb beim Speichern zurück.
  */
 
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_absender'] = array
@@ -69,7 +90,8 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_absendername'] = arra
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_absendername'],
 	'exclude'                 => true,
 	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50')
+	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50'),
+	'save_callback'           => array(array('tl_settings_adressen', 'entitaetenDekodieren'))
 );
 
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_replyto'] = array
@@ -77,7 +99,8 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_replyto'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_replyto'],
 	'exclude'                 => true,
 	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50 clr')
+	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50 clr'),
+	'save_callback'           => array(array('tl_settings_adressen', 'entitaetenDekodieren'))
 );
 
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_betreff'] = array
@@ -85,7 +108,8 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_betreff'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_betreff'],
 	'exclude'                 => true,
 	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50')
+	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50'),
+	'save_callback'           => array(array('tl_settings_adressen', 'entitaetenDekodieren'))
 );
 
 // Grußformel am Ende der E-Mail; leer = der Absendername wird verwendet
@@ -94,7 +118,8 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_signatur'] = array
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_signatur'],
 	'exclude'                 => true,
 	'inputType'               => 'textarea',
-	'eval'                    => array('allowHtml'=>true, 'decodeEntities'=>true, 'rows'=>3, 'tl_class'=>'clr long')
+	'eval'                    => array('allowHtml'=>true, 'decodeEntities'=>true, 'rows'=>3, 'tl_class'=>'clr long'),
+	'save_callback'           => array(array('tl_settings_adressen', 'entitaetenDekodieren'))
 );
 
 $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_fotourl'] = array
@@ -119,5 +144,35 @@ $GLOBALS['TL_DCA']['tl_settings']['fields']['adressen_cron_testempfaenger'] = ar
 	'label'                   => &$GLOBALS['TL_LANG']['tl_settings']['adressen_cron_testempfaenger'],
 	'exclude'                 => true,
 	'inputType'               => 'text',
-	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50')
+	'eval'                    => array('maxlength'=>255, 'decodeEntities'=>true, 'tl_class'=>'w50'),
+	'save_callback'           => array(array('tl_settings_adressen', 'entitaetenDekodieren'))
 );
+
+/**
+ * Rückrufe für die Adressen-Einstellungen
+ */
+class tl_settings_adressen
+{
+	/**
+	 * Wandelt HTML-Entitäten in einem Einstellungswert zurück.
+	 *
+	 * Nötig, weil Contao die Eingabe über Input::post() entgegennimmt und dort
+	 * trotz eval.decodeEntities noch stripTags() läuft: Aus
+	 * "DSB-Presse <presse@example.com>" wird "DSB-Presse &lt;presse@example.com>".
+	 * Der Mailversand fände darin keine gültige Adresse mehr.
+	 *
+	 * @param mixed $varValue Der zu speichernde Wert; alles außer Zeichenketten
+	 *                        wird unverändert durchgereicht
+	 *
+	 * @return mixed Der Wert mit aufgelösten Entitäten
+	 */
+	public function entitaetenDekodieren($varValue)
+	{
+		if (!\is_string($varValue))
+		{
+			return $varValue;
+		}
+
+		return html_entity_decode($varValue, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+	}
+}

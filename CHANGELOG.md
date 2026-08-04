@@ -1,5 +1,35 @@
 # Adressen Changelog
 
+## Version 4.3.1 (2026-08-03)
+
+**Wichtig beim Aktualisieren:** Das Standardbild in den Einstellungen muss einmal neu
+ausgewählt und gespeichert werden. Der bisher gespeicherte Wert ist beschädigt und wird
+durch das Update nicht repariert.
+
+* Fix: Das Standardbild (Einstellungen, Bereich Adressen) blieb im Frontend wirkungslos.
+  Der Dateibaum liefert die Kennung der Datei als 16 Byte langen Binärwert; die
+  Einstellungen landen aber in `system/config/localconfig.php`, also in einer PHP-Datei mit
+  einfach gequoteten Zeichenketten. Nullbytes und Backslashes überleben das nicht — aus 16
+  Byte wurden beim Zurücklesen 19, und `FilesModel::findByUuid()` fand die Datei nie. Ein
+  `save_callback` legt die Kennung jetzt in der lesbaren Schreibweise ab, die dieselbe
+  Methode ebenso versteht. Der Fehler fiel nicht auf, weil im Backend weiterhin ein Bild
+  ausgewählt aussah.
+
+* Fix: Die Einstellungen des Kontroll-Cronjobs verloren die spitzen Klammern in Angaben wie
+  `DSB-Presse <presse@example.com>`. Contao nimmt die Eingabe über `Input::post()` entgegen,
+  das trotz `eval.decodeEntities` noch `stripTags()` ausführt — gespeichert wurde
+  `DSB-Presse &lt;presse@example.com>`, womit der Versand keine gültige Adresse mehr fand.
+  Ein `save_callback` wandelt jetzt beim Speichern zurück (Antwortadresse, Test-Empfänger,
+  Absendername, Betreff und Grußformel). Zusätzlich löst `KontrolliereAdressen` die
+  Entitäten beim Lesen auf — damit reparieren sich **bereits gespeicherte Werte von selbst**,
+  ohne dass sie im Backend neu eingegeben werden müssen.
+* Fix: Eine einzelne unbrauchbare Empfängerangabe brach den gesamten Cron-Lauf ab, weil die
+  Ausnahme aus `Email::sendTo()` die Schleife über alle Adressen verließ — alle noch nicht
+  angeschriebenen Kontakte bekamen dann keine E-Mail mehr. Aufbau und Versand sind jetzt je
+  Adresse abgesichert; ein Fehlschlag wird mit Datensatz-ID und Empfänger ins Log
+  `contao.cron` geschrieben, der Lauf geht weiter. Die Abschlussmeldung nennt zusätzlich die
+  Anzahl der Fehlschläge.
+
 ## Version 4.3.0 (2026-08-02) - mit Claude Code
 
 Prüfung auf **PHP 8.3** und **Contao 4.13 / 5.7** sowie Auslagerung der letzten fest

@@ -3,7 +3,7 @@
 # Der englische Block wird beim Abgleich ergänzt, falls er fehlt.
 
 de:
-    title: Adressenverwaltung Deutscher Schachbund
+    title: Adressenverwaltung
     description: >
         Verwaltet Adressen und Kontakte des Deutschen Schachbundes im Backend und gibt sie im Frontend aus. Auf Wunsch erinnert ein Cron-Lauf per E-Mail daran, veraltete Einträge zu prüfen.
     keywords:

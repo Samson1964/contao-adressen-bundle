@@ -130,7 +130,8 @@ class KontrolliereAdressen
 			->prepare("SELECT * FROM tl_adressen WHERE (email1 != '' OR email2 != '' OR email3 != '' OR email4 != '' OR email5 != '' OR email6 != '') AND aktiv = '1' AND links != ''")
 			->execute();
 
-		$intMails = 0;
+		$intMails  = 0;
+		$intFehler = 0;
 
 		while ($objAdressen->next())
 		{
@@ -141,37 +142,64 @@ class KontrolliereAdressen
 				continue;
 			}
 
-			$objEmail = new Email();
-			$objEmail->from     = $strAbsender;
-			$objEmail->charset  = 'utf-8';
-			$objEmail->subject  = $strBetreff;
-			$objEmail->html     = $this->erzeugeText($objAdressen, $strBetreff);
-			$objEmail->replyTo($strReplyTo);
-
-			if ($strName !== '')
+			// Aufbau und Versand je Adresse absichern: Eine einzelne unbrauchbare
+			// Empfängerangabe (etwa eine ungültige Adresse oder ein abweisender
+			// Mailserver) würde sonst per Ausnahme die ganze Schleife abbrechen –
+			// alle noch nicht angeschriebenen Adressen bekämen keine E-Mail mehr.
+			try
 			{
-				$objEmail->fromName = $strName;
+				$objEmail = new Email();
+				$objEmail->from     = $strAbsender;
+				$objEmail->charset  = 'utf-8';
+				$objEmail->subject  = $strBetreff;
+				$objEmail->html     = $this->erzeugeText($objAdressen, $strBetreff);
+				$objEmail->replyTo($strReplyTo);
+
+				if ($strName !== '')
+				{
+					$objEmail->fromName = $strName;
+				}
+
+				// Versenden – im Testmodus ausschließlich an den Test-Empfänger
+				$objEmail->sendTo($blnLive ? $arrEmpfaenger : $strTestEmpfaenger);
+
+				$intMails++;
 			}
+			catch (\Throwable $e)
+			{
+				$intFehler++;
 
-			// Versenden – im Testmodus ausschließlich an den Test-Empfänger
-			$objEmail->sendTo($blnLive ? $arrEmpfaenger : $strTestEmpfaenger);
-
-			$intMails++;
+				$this->logger?->error(sprintf(
+					'[Adressen-Verwaltung] Kontroll-E-Mail an Adresse %s (%s) fehlgeschlagen: %s',
+					(string) $objAdressen->id,
+					implode(', ', $arrEmpfaenger),
+					$e->getMessage()
+				));
+			}
 		}
 
 		$this->logger?->info(sprintf(
-			'[Adressen-Verwaltung] %d Kontroll-E-Mails verschickt%s',
+			'[Adressen-Verwaltung] %d Kontroll-E-Mails verschickt%s%s',
 			$intMails,
+			$intFehler ? sprintf(', %d fehlgeschlagen', $intFehler) : '',
 			$blnLive ? '' : ' (Testmodus – nur an '.$strTestEmpfaenger.')'
 		));
 	}
 
 	/**
 	 * Liest eine Einstellung aus System -> Einstellungen als getrimmten String.
+	 *
+	 * Beim Speichern schickt Contao den Wert durch Input::post(), das trotz
+	 * eval.decodeEntities noch stripTags() ausführt. Aus einer Angabe wie
+	 * "DSB-Presse <presse@example.com>" wird dabei
+	 * "DSB-Presse &lt;presse@example.com>" – der Versand hätte dann keine
+	 * gültige Adresse mehr. Deshalb wird hier beim Lesen zurückgewandelt; das
+	 * repariert auch bereits gespeicherte Werte, ohne dass sie im Backend neu
+	 * eingegeben werden müssen.
 	 */
 	private static function einstellung(string $strKey): string
 	{
-		return trim((string) Config::get($strKey));
+		return trim(html_entity_decode((string) Config::get($strKey), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 	}
 
 	/**
